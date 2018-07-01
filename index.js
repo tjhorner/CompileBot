@@ -12,6 +12,18 @@ const telegram = new Telegram(config.token, { polling: true })
 
 const languages = [
   {
+    name: "C",
+    alias: "c",
+    file: "file.c",
+    customCommand: "g++ /usercode/file.c -w -o /usercode/file.o >/dev/null && /usercode/file.o"
+  },
+  {
+    name: "C++",
+    alias: "cpp",
+    file: "file.cpp",
+    customCommand: "g++ /usercode/file.cpp -w -o /usercode/file.o >/dev/null && /usercode/file.o"
+  },
+  {
     name: "Node.js",
     alias: "node",
     executable: "nodejs",
@@ -45,13 +57,19 @@ const languages = [
 
 var docker = new Docker()
 
+function escapeHTML(str) {
+  return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+}
+
 function runSandbox(language, source) {
   return new Promise((resolve, reject) => {
     var sandboxId = `${language.alias}_${uuid()}`
     var tempDir = path.join(__dirname, "temp", sandboxId)
 
     fs.mkdir(tempDir)
-      .then(fs.writeFile(path.join(tempDir, language.file)))
+      .then(() => {
+        return fs.writeFile(path.join(tempDir, language.file), source)
+      })
       .then(() => {
         var stdout = ""
 
@@ -61,8 +79,10 @@ function runSandbox(language, source) {
             next()
           }
         })
+
+        var command = language.customCommand ? language.customCommand : `${language.executable} /usercode/${language.file}`
     
-        docker.run("tjhorner/compilebot_sandbox:latest", [ "bash", "-c", `${language.executable} ${language.file}` ], stream, {
+        docker.run("tjhorner/compilebot_sandbox:latest", [ "bash", "-c", command ], stream, {
           Tty: true,
           Interactive: true,
           User: "mysql",
@@ -96,7 +116,7 @@ telegram.on("inline_query", query => {
           inline_keyboard: [
             [
               {
-                text: "e",
+                text: "Useless Button",
                 url: "https://google.com"
               }
             ]
@@ -110,7 +130,7 @@ telegram.on("inline_query", query => {
     })
   } else {
     telegram.answerInlineQuery(query.id, [ ], {
-      switch_pm_text: "This bot is only available to whitelisted users.",
+      switch_pm_text: "This bot is only available to whitelisted users for now.",
       switch_pm_parameter: "whitelist",
       is_personal: true
     })
@@ -123,13 +143,15 @@ telegram.on("chosen_inline_result", result => {
 
     runSandbox(lang, result.query)
       .then(sandboxResult => {
-        var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${query.query}</pre>\n\n<b>Output</b>${sandboxResult}`
+        var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(result.query)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(sandboxResult.trim())}</pre>`
+        console.log(msgText)
         telegram.editMessageText(msgText, {
           inline_message_id: result.inline_message_id,
           parse_mode: "HTML"
         })
       })
       .catch(err => {
+        console.log("Uh oh", err)
         var msgText = "_There was an error compiling this code :(_"
         telegram.editMessageText(msgText, {
           inline_message_id: result.inline_message_id,
