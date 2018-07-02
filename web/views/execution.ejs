@@ -13,11 +13,19 @@
     <div class="container">
       <h2><%= execution.language %> Execution</h2>
 
-      <h3>Input</h3>
-      <pre><%= execution.input %></pre>
+      <% if(execution.user) { %>
+      <p>Executed by <%= execution.user.firstName %> <% if(execution.user.username) { %>(<a href="https://t.me/<%= execution.user.username %>" target="_blank">@<%= execution.user.username %></a>)<% } %></p>
+      <% } %>
+
+      <p>
+        <h3>Input</h3>
+        <pre><%= execution.input %></pre>
+      </p>
   
-      <h3>Output</h3>
-      <pre><%= execution.output %></pre>
+      <p>
+        <h3>Output</h3>
+        <pre><%= execution.output %></pre>
+      </p>
     </div>
   </body>
 </html>

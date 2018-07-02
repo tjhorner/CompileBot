@@ -55,4 +55,11 @@ RUN mkdir -p /opt/rust && \
 RUN apt-get install -y sudo
 RUN apt-get install -y bc
 
+RUN apt-get install lua5.1
+
+RUN mkdir /output
+RUN chown mysql /output
+RUN chmod 755 /output
+RUN chmod g+w /output
+
 RUN echo "mysql ALL = NOPASSWD: /usr/sbin/service mysql start" | cat >> /etc/sudoers

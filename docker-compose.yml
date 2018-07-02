@@ -6,6 +6,7 @@ services:
     depends_on:
       - db
     environment:
+      - PRODUCTION=true
       - BOT_ROOT=/home/tj/CompileBot
       - MONGO_URL=mongodb://db/compilebot
     volumes:

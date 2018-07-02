@@ -6,7 +6,7 @@ app.set("view engine", "ejs")
 app.use(express.static("public"))
 
 app.get("/execution/:id", (req, res) => {
-  Execution.findById(req.params.id, (err, execution) => {
+  Execution.findById(req.params.id).populate("user").exec((err, execution) => {
     if(err) {
       res.render("404")
     } else {
