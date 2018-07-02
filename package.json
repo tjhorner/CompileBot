@@ -11,6 +11,7 @@
   "dependencies": {
     "dockerode": "^2.5.5",
     "language-detect": "^1.1.0",
+    "mongoose": "^5.1.7",
     "mz": "^2.7.0",
     "node-telegram-bot-api": "^0.30.0",
     "request": "^2.87.0",

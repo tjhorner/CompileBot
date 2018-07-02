@@ -7,8 +7,11 @@ const path = require('path')
 const rimraf = require('rimraf')
 const detectLanguage = require('language-detect')
 const Telegram = require('node-telegram-bot-api')
+const { Execution } = require('./db')
 
 const telegram = new Telegram(config.token, { polling: true })
+
+const tempRoot = process.env.BOT_ROOT ? path.join(process.env.BOT_ROOT, "temp") : path.join(__dirname, "temp")
 
 const languages = [
   {
@@ -65,6 +68,7 @@ function runSandbox(language, source) {
   return new Promise((resolve, reject) => {
     var sandboxId = `${language.alias}_${uuid()}`
     var tempDir = path.join(__dirname, "temp", sandboxId)
+    var tempDirExt = path.join(tempRoot, sandboxId)
 
     fs.mkdir(tempDir)
       .then(() => {
@@ -87,7 +91,7 @@ function runSandbox(language, source) {
           Interactive: true,
           User: "mysql",
           Hostconfig: {
-            Binds: [ `${tempDir}:/usercode` ]
+            Binds: [ `${tempDirExt}:/usercode` ]
           },
           Env: [ "NODE_PATH=/usr/local/lib/node_modules" ]
         }, (err, data, container) => {
@@ -116,8 +120,8 @@ telegram.on("inline_query", query => {
           inline_keyboard: [
             [
               {
-                text: "Useless Button",
-                url: "https://google.com"
+                text: "Telegram made me put a button here",
+                url: "https://telegram.org"
               }
             ]
           ]
@@ -143,11 +147,35 @@ telegram.on("chosen_inline_result", result => {
 
     runSandbox(lang, result.query)
       .then(sandboxResult => {
-        var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(result.query)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(sandboxResult.trim())}</pre>`
-        console.log(msgText)
-        telegram.editMessageText(msgText, {
-          inline_message_id: result.inline_message_id,
-          parse_mode: "HTML"
+        Execution.create({
+          language: lang.name,
+          input: result.query.trim(),
+          output: sandboxResult.trim()
+        }, (err, execution) => {
+          var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(result.query)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(sandboxResult.trim())}</pre>`
+          if(msgText.length > 4096) {
+            telegram.editMessageText("_The output is too long to display here. Use the button below to view the execution._", {
+              inline_message_id: result.inline_message_id,
+              parse_mode: "Markdown",
+              reply_markup: {
+                inline_keyboard: {
+                  text: "View full output",
+                  url: `https://compilebot.horner.tj/execution/${execution._id}`
+                }
+              }
+            })
+          } else {
+            telegram.editMessageText(msgText, {
+              inline_message_id: result.inline_message_id,
+              parse_mode: "HTML",
+              reply_markup: {
+                inline_keyboard: {
+                  text: "View full output",
+                  url: `https://compilebot.horner.tj/execution/${execution._id}`
+                }
+              }
+            })
+          }
         })
       })
       .catch(err => {

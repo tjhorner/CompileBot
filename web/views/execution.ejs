@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title><%= execution.language %> CompileBot Execution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/normalize.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/skeleton.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2><%= execution.language %> Execution</h2>
+
+      <h3>Input</h3>
+      <pre><%= execution.input %></pre>
+  
+      <h3>Output</h3>
+      <pre><%= execution.output %></pre>
+    </div>
+  </body>
+</html>

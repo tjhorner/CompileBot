@@ -1,0 +1,31 @@
+version: '3'
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - BOT_ROOT=/home/tj/CompileBot
+      - MONGO_URL=mongodb://db/compilebot
+    volumes:
+      - ./temp:/app/temp
+      - /var/run/docker.sock:/var/run/docker.sock
+  web:
+    build:
+      context: ./web
+    restart: unless-stopped
+    ports:
+      - "21732:3000"
+    environment:
+      - MONGO_URL=mongodb://db/compilebot
+    depends_on:
+      - db
+  db:
+    image: mongo:3.2.20-jessie
+    restart: unless-stopped
+    volumes:
+      - db:/data/db
+
+volumes:
+  db:
