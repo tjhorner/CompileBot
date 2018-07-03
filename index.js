@@ -29,7 +29,7 @@ const languages = [
     customCommand: "g++ /usercode/file.cpp -w -o /output/file.o >/dev/null && /output/file.o"
   },
   {
-    name: "Node.js",
+    name: "JavaScript (Node.js)",
     alias: "node",
     executable: "nodejs",
     file: "file.js"
@@ -47,12 +47,6 @@ const languages = [
     file: "file.py"
   },
   {
-    name: "Lua",
-    alias: "lua",
-    executable: "lua",
-    file: "file.lua"
-  },
-  {
     name: "C#",
     alias: "csharp",
     file: "file.cs",
@@ -68,9 +62,60 @@ const languages = [
     name: "PHP 5",
     alias: "php",
     executable: "php",
-    file: "file.php"
+    file: "file.php",
+    sourcePrefix: "<?php "
+  },
+  {
+    name: "Lua 5.0",
+    alias: "lua50",
+    executable: "lua50",
+    file: "file.lua"
+  },
+  {
+    name: "Lua 5.1",
+    alias: "lua51",
+    executable: "lua5.1",
+    file: "file.lua"
+  },
+  {
+    name: "Lua 5.2",
+    alias: "lua52",
+    executable: "lua5.2",
+    file: "file.lua"
+  },
+  {
+    name: "Lua 5.3",
+    alias: "lua53",
+    executable: "lua53",
+    file: "file.lua"
   }
 ]
+
+var languagesKeyboard = (function() {
+  var tempKeyboard = [ ]
+
+  var i = 0,
+      tempRow = [ ]
+
+  languages.forEach(lang => {
+    i++
+    
+    tempRow.push({
+      text: lang.name,
+      callback_data: `compile:${lang.alias}`
+    })
+
+    if(i === 2) {
+      tempKeyboard.push(tempRow)
+      tempRow = [ ]
+      i = 0
+    }
+  })
+
+  return tempKeyboard
+})()
+
+var sessions = { }
 
 var docker = new Docker()
 
@@ -111,6 +156,9 @@ function runSandbox(language, source) {
     var tempDir = path.join(__dirname, "temp", sandboxId)
     var tempDirExt = path.join(tempRoot, sandboxId)
 
+    if(language.sourcePrefix && source.indexOf(language.sourcePrefix) !== 0)
+      source = language.sourcePrefix + source
+
     fs.mkdir(tempDir)
       .then(() => {
         return fs.writeFile(path.join(tempDir, language.file), source)
@@ -131,10 +179,14 @@ function runSandbox(language, source) {
         var didTimeout = false
 
         var runner = docker.run("tjhorner/compilebot_sandbox:latest", [ "bash", "-c", command ], stream, {
+          Hostname: "compilebot",
           Tty: true,
           Interactive: true,
           User: "mysql",
+          NetworkDisabled: true,
           Hostconfig: {
+            Memory: 268435456, // 256 MB
+            PidsLimit: 100, // 100 processes - prevent fork bombing
             Binds: [ `${tempDirExt}:/usercode` ]
           },
           Env: [ "NODE_PATH=/usr/local/lib/node_modules" ],
@@ -160,137 +212,227 @@ function runSandbox(language, source) {
   })
 }
 
-telegram.on("inline_query", query => {
-  findOrCreateUser(query.from)
-    .then(user => {
-      if(user.executions > 0) {
-        var result = languages.map(lang => {
-          return {
-            type: "article",
-            id: lang.alias,
-            title: lang.name,
-            description: `Compile this code as ${lang.name}`,
-            input_message_content: {
-              message_text: `_Just a sec, compiling this ${lang.name} code..._`,
-              parse_mode: "Markdown"
-            },
+function runCode(lang, code, user, messageId, inlineMessageId) {
+  runSandbox(lang, code)
+    .then(sandboxResult => {
+      Execution.create({
+        user: user._id,
+        language: lang.name,
+        input: code,
+        output: sandboxResult
+      }, (err, execution) => {
+        user.executions--
+        user.save()
+
+        var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(sandboxResult)}</pre>`
+        if(msgText.length > 4096) {
+          var editParams = {
+            parse_mode: "Markdown",
             reply_markup: {
               inline_keyboard: [
                 [
                   {
-                    text: "Telegram made me put a button here",
-                    url: "https://telegram.org"
+                    text: "View full output",
+                    url: `https://compilebot.horner.tj/execution/${execution._id}`
                   }
                 ]
               ]
             }
           }
-        })
-    
-        telegram.answerInlineQuery(query.id, result, {
-          is_personal: true
-        })
-      } else {
-        telegram.answerInlineQuery(query.id, [ ], {
-          switch_pm_parameter: "getexecs",
-          switch_pm_text: "No executions left! Select to get more.",
-          cache_time: 10,
-          is_personal: true
-        })
-      }
+
+          if(messageId) {
+            editParams.chat_id = user.telegramId
+            editParams.message_id = messageId
+          } else if(inlineMessageId) {
+            editParams.inline_message_id = inlineMessageId
+          }
+
+          telegram.editMessageText("_The output is too long to display here. Use the button below to view the execution._", editParams)
+        } else {
+          var editParams = {
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "View full output",
+                    url: `https://compilebot.horner.tj/execution/${execution._id}`
+                  }
+                ],
+                [
+                  {
+                    text: "Share output",
+                    switch_inline_query: `exec:${execution._id}`
+                  }
+                ]
+              ]
+            }
+          }
+
+          if(messageId) {
+            editParams.chat_id = user.telegramId
+            editParams.message_id = messageId
+          } else if(inlineMessageId) {
+            editParams.inline_message_id = inlineMessageId
+          }
+
+          telegram.editMessageText(msgText, editParams)
+        }
+      })
     })
-})
+    .catch(err => {
+      if(err === "timeout") {
+        user.executions--
+        user.save()
 
-telegram.on("chosen_inline_result", result => {
-  findOrCreateUser(result.from)
+        var msgText = "_This code took too long to run, so its execution was terminated._"
+      } else {
+        console.log("Uh oh", err)
+        var msgText = "_There was an internal error compiling this code :(_\n_(This did not count toward your executions.)_"
+      }
+
+      var editParams = {
+        parse_mode: "Markdown"
+      }
+
+      if(messageId) {
+        editParams.chat_id = user.telegramId
+        editParams.message_id = messageId
+      } else if(inlineMessageId) {
+        editParams.inline_message_id = inlineMessageId
+      }
+
+      telegram.editMessageText(msgText, editParams)
+    })
+}
+
+// START events
+
+// EVENT inline_query
+telegram.on("inline_query", query => {
+  findOrCreateUser(query.from)
     .then(user => {
-      if(user.executions > 0) {
-        var lang = languages.filter(lang => lang.alias === result.result_id)[0]
-    
-        runSandbox(lang, result.query)
-          .then(sandboxResult => {
-            Execution.create({
-              user: user._id,
-              language: lang.name,
-              input: result.query.trim(),
-              output: sandboxResult.trim()
-            }, (err, execution) => {
-              user.executions--
-              user.save()
+      if(query.query.indexOf("exec:") === 0) {
+        var execId = query.query.split(":")[1]
 
-              var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(result.query)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(sandboxResult.trim())}</pre>`
-              if(msgText.length > 4096) {
-                telegram.editMessageText("_The output is too long to display here. Use the button below to view the execution._", {
-                  inline_message_id: result.inline_message_id,
-                  parse_mode: "Markdown",
+        Execution.findById(execId)
+          .then(exec => {
+            if(exec) {
+              telegram.answerInlineQuery(query.id, [
+                {
+                  type: "article",
+                  id: "share",
+                  title: `Share ${exec.language} execution`,
+                  description: `Share this ${exec.language} execution in the current chat`,
+                  input_message_content: {
+                    message_text: `<b>Language</b>\n${exec.language}\n\n<b>Input</b>\n<pre>${escapeHTML(exec.input)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(exec.output)}</pre>`,
+                    parse_mode: "HTML"
+                  },
                   reply_markup: {
                     inline_keyboard: [
                       [
                         {
                           text: "View full output",
-                          url: `https://compilebot.horner.tj/execution/${execution._id}`
+                          url: `https://compilebot.horner.tj/execution/${exec._id}`
                         }
-                      ]
-                    ]
-                  }
-                })
-              } else {
-                telegram.editMessageText(msgText, {
-                  inline_message_id: result.inline_message_id,
-                  parse_mode: "HTML",
-                  reply_markup: {
-                    inline_keyboard: [
+                      ],
                       [
                         {
-                          text: "View full output",
-                          url: `https://compilebot.horner.tj/execution/${execution._id}`
+                          text: "Share output",
+                          switch_inline_query: `exec:${exec._id}`
                         }
                       ]
                     ]
                   }
-                })
-              }
-            })
-          })
-          .catch(err => {
-            if(err === "timeout") {
-              user.executions--
-              user.save()
-
-              var msgText = "_This code took too long to run, so its execution was terminated._"
-              telegram.editMessageText(msgText, {
-                inline_message_id: result.inline_message_id,
-                parse_mode: "Markdown"
-              })
+                }
+              ])
             } else {
-              console.log("Uh oh", err)
-              var msgText = "_There was an internal error compiling this code :(_\n_(This did not count toward your executions.)_"
-              telegram.editMessageText(msgText, {
-                inline_message_id: result.inline_message_id,
-                parse_mode: "Markdown"
-              })
+              telegram.answerInlineQuery(query.id, [ ])
             }
           })
+          .catch(err => {
+            console.log("e bad", err),
+            telegram.answerInlineQuery(query.id, [ ])
+          })
       } else {
-        var msgText = "_Out of executions! Get more with the button below._"
-        telegram.editMessageText(msgText, {
-          inline_message_id: result.inline_message_id,
-          parse_mode: "Markdown",
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "Get more executions",
-                  url: "https://t.me/CompileBot?start=getexecs"
+        if(user.executions > 0) {
+          if(query.query.trim() === "") {
+            telegram.answerInlineQuery(query.id, [ ], {
+              switch_pm_parameter: "start",
+              switch_pm_text: "Type some code then select a language...",
+              cache_time: 10,
+              is_personal: true
+            })
+          } else {
+            var result = languages.map(lang => {
+              return {
+                type: "article",
+                id: lang.alias,
+                title: lang.name,
+                description: `Run this code as ${lang.name}`,
+                input_message_content: {
+                  message_text: `_Just a sec, running this ${lang.name} code..._`,
+                  parse_mode: "Markdown"
+                },
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: "¯\\_(ツ)_/¯",
+                        url: "https://tjhorner.com"
+                      }
+                    ]
+                  ]
                 }
-              ]
-            ]
+              }
+            })
+        
+            telegram.answerInlineQuery(query.id, result, {
+              is_personal: true
+            })
           }
-        })
+        } else {
+          telegram.answerInlineQuery(query.id, [ ], {
+            switch_pm_parameter: "getexecs",
+            switch_pm_text: "No executions left! Select to get more.",
+            cache_time: 10,
+            is_personal: true
+          })
+        }
       }
     })
 })
 
+// EVENT chosen_inline_result
+telegram.on("chosen_inline_result", result => {
+  if(result.result_id !== "share") {
+    findOrCreateUser(result.from)
+      .then(user => {
+        if(user.executions > 0) {
+          var lang = languages.filter(lang => lang.alias === result.result_id)[0]
+          runCode(lang, result.query, user, null, result.inline_message_id)
+        } else {
+          var msgText = "_Out of executions! Get more with the button below._"
+          telegram.editMessageText(msgText, {
+            inline_message_id: result.inline_message_id,
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "Get more executions",
+                    url: "https://t.me/CompileBot?start=getexecs"
+                  }
+                ]
+              ]
+            }
+          })
+        }
+      })
+  }
+})
+
+// EVENT pre_checkout_query
 telegram.on("pre_checkout_query", query => {
   if(query.invoice_payload === "exec100" || query.invoice_payload === "exec1000") {
     telegram.answerPreCheckoutQuery(query.id, true)
@@ -301,6 +443,7 @@ telegram.on("pre_checkout_query", query => {
   }
 })
 
+// EVENT successful_payment
 telegram.on("successful_payment", msg => {
   findOrCreateUser(msg.from)
     .then(user => {
@@ -323,6 +466,52 @@ telegram.on("successful_payment", msg => {
       })
     })
 })
+
+telegram.on("callback_query", query => {
+  findOrCreateUser(query.from)
+    .then(user => {
+      if(user.executions > 0) {
+        var lang = languages.filter(lang => lang.alias === query.data.split(":")[1])[0]
+        var session = sessions[query.from.id.toString()]
+
+        if(session.code && session.compileMessageId) {
+          telegram.editMessageText(`_Just a sec, running this ${lang.name} code..._`, {
+            chat_id: query.from.id,
+            message_id: session.compileMessageId,
+            parse_mode: "Markdown"
+          })
+
+          runCode(lang, session.code, user, session.compileMessageId, null)
+        } else {
+          telegram.editMessageText(`_Your session has expired, please send the command again._`, {
+            chat_id: query.from.id,
+            message_id: session.compileMessageId,
+            parse_mode: "Markdown"
+          })
+        }
+      } else {
+        telegram.editMessageText(`_Out of executions! Get more with the button below._`, {
+          chat_id: query.from.id,
+          message_id: session.compileMessageId,
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "Get more executions",
+                  url: "https://t.me/CompileBot?start=getexecs"
+                }
+              ]
+            ]
+          }
+        })
+      }
+    })
+})
+
+// END events
+
+// START commands
 
 function sendStartMessage(msg) {
   findOrCreateUser(msg.from)
@@ -365,6 +554,41 @@ telegram.onText(/^\/inline$/, msg => {
     })
 })
 
+// COMMAND /compile (without params)
+telegram.onText(/^\/compile$/, msg => {
+  telegram.sendMessage(msg.from.id, "To use this command, type `/compile` then your code. For example, `/compile print \"hello\"`. You will be asked which language you want to run it as later.", {
+    parse_mode: "Markdown"
+  })
+})
+
+// COMMAND /compile (with params)
+telegram.onText(/^\/compile ((.|\n)+)/, (msg, matches) => {
+  findOrCreateUser(msg.from)
+    .then(user => {
+      if(user.executions > 0) {
+        if(sessions[msg.from.id.toString()]) {
+          var session = sessions[msg.from.id.toString()]
+        } else {
+          sessions[msg.from.id.toString()] = { }
+          var session = sessions[msg.from.id.toString()]
+        }
+
+        session.code = matches[1].trim()
+
+        telegram.sendMessage(msg.from.id, "Which language do you want to run this code as?", {
+          reply_to_message_id: msg.message_id,
+          reply_markup: {
+            inline_keyboard: languagesKeyboard
+          }
+        }).then(botMsg => {
+          session.compileMessageId = botMsg.message_id
+        })
+      } else {
+        telegram.sendMessage(msg.from.id, "You are out of code executions! Use /getexecutions to get more.")
+      }
+    })
+})
+
 telegram.onText(/^\/getexecutions$/, msg => {
   findOrCreateUser(msg.from)
     .then(user => {
@@ -403,9 +627,6 @@ telegram.onText(/^\/give (.+)$/, (msg, matches) => {
     var toUserId = parseInt(split[0])
     var execsToGive = parseInt(split[1])
 
-    console.log(split)
-    console.log("/give", toUserId, execsToGive)
-
     User.find({ telegramId: toUserId })
       .then(users => {
         if(users.length > 0) {
@@ -432,6 +653,22 @@ telegram.onText(/^\/give (.+)$/, (msg, matches) => {
   }
 })
 
+// COMMAND /stats
+telegram.onText(/^\/stats$/, (msg, matches) => {
+  if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
+    var message = ""
+    User.count()
+      .then(userCount => {
+        message += `*Users*: ${userCount}\n`
+        return Execution.count()
+      })
+      .then(execCount => {
+        message += `*Executions*: ${execCount}`
+        telegram.sendMessage(msg.from.id, message, { parse_mode: "Markdown" })
+      })
+  }
+})
+
 if(debugMode) {
   telegram.onText(/^\/resetexecs$/, msg => {
     findOrCreateUser(msg.from)
@@ -441,3 +678,5 @@ if(debugMode) {
       })
   })
 }
+
+// END commands

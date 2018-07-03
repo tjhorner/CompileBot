@@ -63,3 +63,8 @@ RUN chmod 755 /output
 RUN chmod g+w /output
 
 RUN echo "mysql ALL = NOPASSWD: /usr/sbin/service mysql start" | cat >> /etc/sudoers
+
+# Lua 5.3 isn't available from the official repos
+COPY ./lua53 /usr/bin/lua53
+COPY ./luac53 /usr/bin/luac53
+RUN chmod +x /usr/bin/lua*
