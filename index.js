@@ -315,9 +315,16 @@ telegram.on("inline_query", query => {
       if(query.query.indexOf("exec:") === 0) {
         var execId = query.query.split(":")[1]
 
-        Execution.findById(execId)
+        Execution.findById(execId).populate("user").exec()
           .then(exec => {
             if(exec) {
+              var messageText = ""
+
+              if(exec.user.telegramId !== query.from.id)
+                messageText += `<b>Author</b>\n<a href="tg://user?id=${exec.user.telegramId}">${escapeHTML(exec.user.firstName)}</a>\n\n`
+
+              messageText += `<b>Language</b>\n${exec.language}\n\n<b>Input</b>\n<pre>${escapeHTML(exec.input)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(exec.output)}</pre>`
+
               telegram.answerInlineQuery(query.id, [
                 {
                   type: "article",
@@ -325,7 +332,7 @@ telegram.on("inline_query", query => {
                   title: `Share ${exec.language} execution`,
                   description: `Share this ${exec.language} execution in the current chat`,
                   input_message_content: {
-                    message_text: `<b>Language</b>\n${exec.language}\n\n<b>Input</b>\n<pre>${escapeHTML(exec.input)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(exec.output)}</pre>`,
+                    message_text: messageText,
                     parse_mode: "HTML"
                   },
                   reply_markup: {
