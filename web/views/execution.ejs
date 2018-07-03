@@ -7,7 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="/css/normalize.css" />
     <link rel="stylesheet" type="text/css" media="screen" href="/css/skeleton.css" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css?v2" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/highlightjs/styles/vs2015.css" />
+    <script src="/highlightjs/highlight.pack.js"></script>
   </head>
   <body>
     <div class="container">
@@ -19,13 +21,16 @@
 
       <p>
         <h3>Input</h3>
-        <pre><%= execution.input %></pre>
+        <pre><code class="<%= highlightLang %>"><%= execution.input %></code></pre>
       </p>
   
       <p>
         <h3>Output</h3>
-        <pre><%= execution.output %></pre>
+        <pre><code><%= execution.output %></code></pre>
       </p>
     </div>
+    <script>
+      hljs.initHighlightingOnLoad()
+    </script>
   </body>
 </html>

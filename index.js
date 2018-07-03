@@ -218,6 +218,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
       Execution.create({
         user: user._id,
         language: lang.name,
+        languageAlias: lang.alias,
         input: code,
         output: sandboxResult
       }, (err, execution) => {
@@ -529,7 +530,7 @@ function sendStartMessage(msg) {
     welcomeText += `- ${lang.name}\n`
   })
 
-  welcomeText += "\nYou can use me with inline mode to easily share snippets and their results with friends. To do so, simply type `@CompileBot` into your message box, then a space, then your code. Choose the language you want and I'll compile it! Want a demo? Send /inline."
+  welcomeText += "\nYou can use me with inline mode to easily share snippets and their results with friends. To do so, simply type `@CompileBot` into your message box, then a space, then your code. Choose the language you want and I'll compile it! Want a demo? Send /inline.\n\nYou can also use the /compile command to run larger pieces of code (Telegram has a 512-character limit on inline mode)."
 
   telegram.sendMessage(msg.from.id, welcomeText, { parse_mode: "Markdown" })
 }

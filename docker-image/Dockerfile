@@ -55,7 +55,7 @@ RUN mkdir -p /opt/rust && \
 RUN apt-get install -y sudo
 RUN apt-get install -y bc
 
-RUN apt-get install lua5.1
+RUN apt-get install -y lua5.1 lua5.2 lua50
 
 RUN mkdir /output
 RUN chown mysql /output

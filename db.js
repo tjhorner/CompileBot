@@ -18,6 +18,7 @@ const Execution = mongoose.model("Execution", {
     ref: "User"
   },
   language: String,
+  languageAlias: String,
   input: String,
   output: String
 })
