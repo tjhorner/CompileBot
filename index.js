@@ -690,7 +690,9 @@ telegram.onText(/^\/getexecutions$/, msg => {
 })
 
 telegram.onText(/^\/support$/, msg => {
-  telegram.sendMessage(msg.from.id, `If something is wrong with the bot or you have a suggestion for it, please contact @bcrypt.`)
+  telegram.sendMessage(msg.from.id, `If something is wrong with the bot or you have a suggestion for it, please contact @bcrypt. You can also submit suggestions and bug reports directly to this repository: https://github.com/tjhorner/CompileBotIssues/issues`, {
+    disable_web_page_preview: true
+  })
 })
 
 telegram.onText(/^\/exec100$/, msg => {
