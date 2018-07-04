@@ -68,3 +68,12 @@ RUN echo "mysql ALL = NOPASSWD: /usr/sbin/service mysql start" | cat >> /etc/sud
 COPY ./lua53 /usr/bin/lua53
 COPY ./luac53 /usr/bin/luac53
 RUN chmod +x /usr/bin/lua*
+
+# PHP 7
+RUN LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
+RUN apt-get update
+RUN apt-get install -y php7.0-cli
+
+# Java runner
+COPY ./runjava.sh /usr/bin/runjava
+RUN chmod +x /usr/bin/runjava

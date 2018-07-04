@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.18.3",
     "dockerode": "^2.5.5",
+    "express": "^4.16.3",
     "language-detect": "^1.1.0",
     "mongoose": "^5.1.7",
     "mz": "^2.7.0",

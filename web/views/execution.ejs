@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" media="screen" href="/css/skeleton.css" />
     <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css?v2" />
     <link rel="stylesheet" type="text/css" media="screen" href="/highlightjs/styles/vs2015.css" />
-    <script src="/highlightjs/highlight.pack.js"></script>
+    <script src="/highlightjs/highlight.pack.js?v2"></script>
   </head>
   <body>
     <div class="container">
@@ -21,16 +21,16 @@
 
       <p>
         <h3>Input</h3>
-        <pre><code class="<%= highlightLang %>"><%= execution.input %></code></pre>
+        <pre><code id="input_code" class="<%= highlightLang %>"><%= execution.input %></code></pre>
       </p>
   
       <p>
         <h3>Output</h3>
-        <pre><code><%= execution.output %></code></pre>
+        <pre><code class="hljs"><%= execution.output %></code></pre>
       </p>
     </div>
     <script>
-      hljs.initHighlightingOnLoad()
+      hljs.highlightBlock(document.getElementById("input_code"))
     </script>
   </body>
 </html>

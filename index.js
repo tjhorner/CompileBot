@@ -9,9 +9,21 @@ const detectLanguage = require('language-detect')
 const Telegram = require('node-telegram-bot-api')
 const { User, Execution } = require('./db')
 
+// internal web server deps
+const express = require('express')
+const bodyParser = require('body-parser')
+const webServer = express()
+
 const debugMode = process.env.PRODUCTION ? false : true
 
-const telegram = new Telegram(config.token, { polling: true })
+var telegram
+
+if(debugMode) {
+  telegram = new Telegram(config.token, { polling: true })
+} else {
+  telegram = new Telegram(config.token)
+  telegram.setWebHook(`${process.env.WEB_ROOT}/update/${config.token}`)
+}
 
 const tempRoot = process.env.BOT_ROOT ? path.join(process.env.BOT_ROOT, "temp") : path.join(__dirname, "temp")
 
@@ -27,6 +39,12 @@ const languages = [
     alias: "cpp",
     file: "file.cpp",
     customCommand: "g++ /usercode/file.cpp -w -o /output/file.o >/dev/null && /output/file.o"
+  },
+  {
+    name: "Java",
+    alias: "java",
+    file: "file.java",
+    customCommand: "javac -g:none -nowarn -d /output /usercode/file.java >/dev/null && runjava"
   },
   {
     name: "JavaScript (Node.js)",
@@ -53,6 +71,12 @@ const languages = [
     customCommand: "gmcs /usercode/file.cs -out:/output/file.exe >/dev/null && mono /output/file.exe"
   },
   {
+    name: "Visual Basic .NET",
+    alias: "vb",
+    file: "file.vb",
+    customCommand: "vbnc /quiet /nologo /out:/output/file.exe /usercode/file.vb >/dev/null && mono /output/file.exe"
+  },
+  {
     name: "Ruby",
     alias: "ruby",
     executable: "ruby",
@@ -60,8 +84,15 @@ const languages = [
   },
   {
     name: "PHP 5",
-    alias: "php",
-    executable: "php",
+    alias: "php5",
+    executable: "php5",
+    file: "file.php",
+    sourcePrefix: "<?php "
+  },
+  {
+    name: "PHP 7",
+    alias: "php7",
+    executable: "php7.0",
     file: "file.php",
     sourcePrefix: "<?php "
   },
@@ -97,7 +128,7 @@ var languagesKeyboard = (function() {
   var i = 0,
       tempRow = [ ]
 
-  languages.forEach(lang => {
+  languages.forEach((lang, index) => {
     i++
     
     tempRow.push({
@@ -109,6 +140,9 @@ var languagesKeyboard = (function() {
       tempKeyboard.push(tempRow)
       tempRow = [ ]
       i = 0
+    } else if(index === languages.length - 1) {
+      // last in array
+      tempKeyboard.push(tempRow)
     }
   })
 
@@ -150,7 +184,7 @@ function findOrCreateUser(telegramUser) {
   })
 }
 
-function runSandbox(language, source) {
+function runSandbox(language, source, onOutput) {
   return new Promise((resolve, reject) => {
     var sandboxId = `${language.alias}_${uuid()}`
     var tempDir = path.join(__dirname, "temp", sandboxId)
@@ -169,6 +203,7 @@ function runSandbox(language, source) {
         var stream = new Stream.Writable({
           write: function(chunk, encoding, next) {
             stdout += chunk.toString()
+            if(onOutput) onOutput(chunk.toString())
             next()
           }
         })
@@ -185,7 +220,7 @@ function runSandbox(language, source) {
           User: "mysql",
           NetworkDisabled: true,
           Hostconfig: {
-            Memory: 268435456, // 256 MB
+            Memory: 67108864, // 64 MB
             PidsLimit: 100, // 100 processes - prevent fork bombing
             Binds: [ `${tempDirExt}:/usercode` ]
           },
@@ -213,7 +248,51 @@ function runSandbox(language, source) {
 }
 
 function runCode(lang, code, user, messageId, inlineMessageId) {
-  runSandbox(lang, code)
+  var currentStdout = ""
+  var stdoutChanged = false
+
+  var liveOutputInterval = setInterval(() => {
+    if(stdoutChanged) {
+      stdoutChanged = false
+
+      var msgText = `<i>Currently running code...</i>\n\n<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(currentStdout)}</pre>`
+
+      if(msgText.length > 4096) {
+        var editParams = {
+          parse_mode: "Markdown"
+        }
+
+        // TODO DRY this code
+        if(messageId) {
+          editParams.chat_id = user.telegramId
+          editParams.message_id = messageId
+        } else if(inlineMessageId) {
+          editParams.inline_message_id = inlineMessageId
+        }
+
+        telegram.editMessageText("_This output is too long to be displayed live. Please wait until execution is complete._", editParams)
+        clearInterval(liveOutputInterval)
+      } else {
+        var editParams = {
+          parse_mode: "HTML"
+        }
+
+        if(messageId) {
+          editParams.chat_id = user.telegramId
+          editParams.message_id = messageId
+        } else if(inlineMessageId) {
+          editParams.inline_message_id = inlineMessageId
+        }
+
+        telegram.editMessageText(msgText, editParams)
+      }
+    }
+  }, 1000)
+
+  runSandbox(lang, code, /* onOutput */ data => {
+    currentStdout += data
+    stdoutChanged = true
+  })
     .then(sandboxResult => {
       Execution.create({
         user: user._id,
@@ -222,6 +301,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
         input: code,
         output: sandboxResult
       }, (err, execution) => {
+        clearInterval(liveOutputInterval)
         user.executions--
         user.save()
 
@@ -353,7 +433,10 @@ telegram.on("inline_query", query => {
                     ]
                   }
                 }
-              ])
+              ], {
+                is_personal: true,
+                cache_time: 120
+              })
             } else {
               telegram.answerInlineQuery(query.id, [ ])
             }
@@ -688,3 +771,20 @@ if(debugMode) {
 }
 
 // END commands
+
+// START web server (for WH updates)
+
+if(!debugMode) {
+  webServer.use(bodyParser.json({ extended: true }))
+
+  // this does not need to have any authentication,
+  // as it will only be available internally
+  webServer.post("/update", (req, res) => {
+    telegram.processUpdate(req.body)
+    res.sendStatus(200)
+  })
+
+  webServer.listen(3000)
+}
+
+// END web server

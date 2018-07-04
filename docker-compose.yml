@@ -9,6 +9,7 @@ services:
       - PRODUCTION=true
       - BOT_ROOT=/home/tj/CompileBot
       - MONGO_URL=mongodb://db/compilebot
+      - WEB_ROOT=https://compilebot.horner.tj
     volumes:
       - ./temp:/app/temp
       - /var/run/docker.sock:/var/run/docker.sock
