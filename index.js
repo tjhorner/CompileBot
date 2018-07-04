@@ -689,10 +689,14 @@ telegram.onText(/^\/getexecutions$/, msg => {
     })
 })
 
-telegram.onText(/^\/support$/, msg => {
-  telegram.sendMessage(msg.from.id, `If something is wrong with the bot or you have a suggestion for it, please contact @bcrypt. You can also submit suggestions and bug reports directly to this repository: https://github.com/tjhorner/CompileBotIssues/issues`, {
-    disable_web_page_preview: true
-  })
+telegram.onText(/^\/help$/, msg => {
+  User.count()
+    .then(userCount => {
+      telegram.sendMessage(msg.from.id, `Here are some answers to questions you may have.\n\n*How do I use the bot?*\nSend /start and the bot will let you know everything you need to know.\n\n*Is the bot open source?*\nNo, not at the moment, and there are currently no plans to make it so in the future.\n\n*Where do I report bugs?*\nhttps://github.com/tjhorner/CompileBotIssues/issues\n\n*Can I donate?*\nThere's no donation method, but you can buy executions instead with /getexecutions. Thanks for your support!\n\n*How many people have used this bot?*\n${userCount}.\n\n*I have another question not listed here.*\nLet @bcrypt know.`, {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown"
+      })
+    })
 })
 
 telegram.onText(/^\/exec100$/, msg => {
