@@ -219,10 +219,11 @@ function runSandbox(language, source, onOutput) {
           Interactive: true,
           User: "mysql",
           NetworkDisabled: true,
-          Hostconfig: {
+          HostConfig: {
             Memory: 67108864, // 64 MB
             PidsLimit: 100, // 100 processes - prevent fork bombing
-            Binds: [ `${tempDirExt}:/usercode` ]
+            Binds: [ `${tempDirExt}:/usercode` ],
+            Runtime: "runsc"
           },
           Env: [ "NODE_PATH=/usr/local/lib/node_modules" ],
           Name: sandboxId
