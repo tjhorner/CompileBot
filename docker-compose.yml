@@ -26,6 +26,8 @@ services:
   db:
     image: mongo:3.2.20-jessie
     restart: unless-stopped
+    ports:
+      - "38123:27017"
     volumes:
       - db:/data/db
 

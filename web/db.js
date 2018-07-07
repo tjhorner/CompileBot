@@ -2,7 +2,12 @@ const mongoose = require('mongoose')
 mongoose.connect(process.env.MONGO_URL)
 
 const User = mongoose.model("User", {
-  telegramId: Number,
+  telegramId: {
+    type: Number,
+    unique: true,
+    required: true,
+    dropDups: true
+  },
   firstName: String,
   lastName: String,
   username: String,

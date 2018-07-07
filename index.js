@@ -221,6 +221,7 @@ function runSandbox(language, source, onOutput) {
           NetworkDisabled: true,
           HostConfig: {
             Memory: 67108864, // 64 MB
+            MemorySwap: 67108864, // also 64 MB, disallow swap
             PidsLimit: 100, // 100 processes - prevent fork bombing
             Binds: [ `${tempDirExt}:/usercode` ],
             Runtime: "runsc"
