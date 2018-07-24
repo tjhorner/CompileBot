@@ -692,7 +692,8 @@ telegram.onText(/^\/getexecutions$/, msg => {
         message += "You can get some more here:"
 
       message += `\n\n/exec1000 — *1000 executions* for $5.00 ($0.005/exec)\n/exec100 — *100 executions* for $1.00 ($0.01/exec)\n\nYou currently have *${user.executions}* executions left.`
-      telegram.sendMessage(msg.from.id, , {
+      
+      telegram.sendMessage(msg.from.id, message, {
         parse_mode: "Markdown"
       })
     })
