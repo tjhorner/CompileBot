@@ -684,7 +684,7 @@ telegram.onText(/^\/compile ((.|\n)+)/, (msg, matches) => {
 telegram.onText(/^\/getexecutions$/, msg => {
   findOrCreateUser(msg.from)
     .then(user => {
-      var message = "*Need more code executions?*"
+      var message = "*Need more code executions?* "
 
       if(!user.redeemedFreeExecutions)
         message += "You can get 100 *FREE* executions by reviewing CompileBot. Send /redeemexecs for more details. You can also get some more here:"
@@ -692,7 +692,7 @@ telegram.onText(/^\/getexecutions$/, msg => {
         message += "You can get some more here:"
 
       message += `\n\n/exec1000 — *1000 executions* for $5.00 ($0.005/exec)\n/exec100 — *100 executions* for $1.00 ($0.01/exec)\n\nYou currently have *${user.executions}* executions left.`
-      
+
       telegram.sendMessage(msg.from.id, message, {
         parse_mode: "Markdown"
       })
