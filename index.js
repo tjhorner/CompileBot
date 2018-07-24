@@ -744,7 +744,7 @@ telegram.onText(/^\/redeemexecs$/, msg => {
                 telegram.sendMessage(msg.from.id, `*Thanks for reviewing CompileBot!* For doing so, we've added *100* free executions to your account. Enjoy!`, { parse_mode: "Markdown" })
               })
             } else {
-              telegram.sendMessage(msg.from.id, `To redeem your free executions, please review me [here](https://t.me/storebot?start=compilebot), come back, and then send /redeemexecs again. If you have submitted a review, please try re-submitting it through StoreBot.`, { parse_mode: "Markdown" })
+              telegram.sendMessage(msg.from.id, `To redeem your free executions, please review me [here](https://t.me/storebot?start=compilebot), come back, and then send /redeemexecs again. If you have already submitted a review and I can't find it, please try re-submitting it through StoreBot.`, { parse_mode: "Markdown" })
             }
           })
       }
