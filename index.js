@@ -5,7 +5,7 @@ const uuid = require('uuid/v1')
 const fs = require('mz/fs')
 const path = require('path')
 const rimraf = require('rimraf')
-const detectLanguage = require('language-detect')
+const StoreBot = require('./lib/storebot')
 const Telegram = require('node-telegram-bot-api')
 const { User, Execution } = require('./db')
 
@@ -294,8 +294,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
   runSandbox(lang, code, /* onOutput */ data => {
     currentStdout += data
     stdoutChanged = true
-  })
-    .then(sandboxResult => {
+  }).then(sandboxResult => {
       Execution.create({
         user: user._id,
         language: lang.name,
@@ -717,6 +716,29 @@ telegram.onText(/^\/exec1000$/, msg => {
       amount: 500
     }
   ])
+})
+
+telegram.onText(/^\/redeemexecs$/, msg => {
+  findOrCreateUser(msg.from)
+    .then(user => {
+      if(user.redeemedFreeExecutions) {
+        telegram.sendMessage(msg.from.id, "You already redeemed your free executions!")
+      } else {
+        StoreBot.getReviews("compilebot", 0, 20)
+          .then(reviews => {
+            var review = reviews.filter(rev => rev.userId === msg.from.id.toString())[0]
+
+            if(review) {
+              user.executions += 100
+              user.save().then(() => {
+                telegram.sendMessage(msg.from.id, `*Thanks for reviewing CompileBot!* For doing so, we've added *100* free executions to your account. Enjoy!`, { parse_mode: "Markdown" })
+              })
+            } else {
+              telegram.sendMessage(msg.from.id, `To redeem your free executions, please review me [here](https://t.me/storebot?start=compilebot), come back, and then send /redeemexecs again. If you have submitted a review, please try re-submitting it through StoreBot.`, { parse_mode: "Markdown" })
+            }
+          })
+      }
+    })
 })
 
 // COMMAND /give

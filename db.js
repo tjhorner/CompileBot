@@ -14,6 +14,10 @@ const User = mongoose.model("User", {
   executions: {
     type: Number,
     default: 50
+  },
+  redeemedFreeExecutions: {
+    type: Boolean,
+    default: false
   }
 })
 
