@@ -168,6 +168,10 @@ function findOrCreateUser(telegramUser) {
             lastName: telegramUser.last_name,
             username: telegramUser.username
           }).then(user => resolve(user))
+          
+          telegram.sendMessage(78442301, `*New user:* [${telegramUser.id}](tg://user?id=${telegramUser.id})`, {
+            parse_mode: "Markdown"
+          })
         } else {
           var user = users[0]
 
