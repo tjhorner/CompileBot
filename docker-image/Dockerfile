@@ -77,3 +77,7 @@ RUN apt-get install -y php7.0-cli
 # Java runner
 COPY ./runjava.sh /usr/bin/runjava
 RUN chmod +x /usr/bin/runjava
+
+RUN apt-get install -y python-pip python3-pip
+RUN pip3 install yaml
+RUN pip install yaml
