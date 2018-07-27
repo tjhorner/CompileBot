@@ -78,6 +78,6 @@ RUN apt-get install -y php7.0-cli
 COPY ./runjava.sh /usr/bin/runjava
 RUN chmod +x /usr/bin/runjava
 
-RUN apt-get install -y python-pip python3-pip
+RUN apt-get install -y python-pip python3-pip libyaml-dev libyaml
 RUN pip3 install pyyaml
 RUN pip install pyyaml
