@@ -854,7 +854,7 @@ telegram.onText(/^\/announce$/, (msg, matches) => {
         users.forEach((user, index) => {
           setTimeout(() => {
             console.log("send to", user.telegramId)
-          }, index * 50)
+          }, index * 100)
         })
 //         var message =
 // `Hello! I've got a few announcements for you:
