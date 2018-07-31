@@ -32,6 +32,18 @@ app.get("/", (req, res) => {
   res.redirect("https://t.me/CompileBot")
 })
 
+app.get("/execution/test", (req, res) => {
+  res.render("execution", { execution: {
+    user: {
+      firstName: "TJ",
+      username: "bcrypt"
+    },
+    input: "const e = require('no')\n\nconsole.log('rrrrrrrrrrr\\nbbbbbbbbb')\nvar x = 3\n// yep\n// TODO: random shit",
+    output: "rrrrrrrrrrr\nbbbbbbbbb",
+    language: "JavaScript (Node.js)"
+  }, highlightLang: "javascripts" })
+})
+
 app.get("/execution/:id", (req, res) => {
   Execution.findById(req.params.id).populate("user").exec((err, execution) => {
     if(err) {

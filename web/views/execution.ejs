@@ -6,29 +6,37 @@
     <title><%= execution.language %> CompileBot Execution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="/css/normalize.css" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/skeleton.css" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css?v2" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/skeleton.css?v2" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css?v3" />
     <link rel="stylesheet" type="text/css" media="screen" href="/highlightjs/styles/vs2015.css" />
     <script src="/highlightjs/highlight.pack.js?v2"></script>
   </head>
   <body>
-    <div class="container">
-      <h2><%= execution.language %> Execution</h2>
+    <div class="wrapper">
+      <div class="title">
+        <h1><%= execution.language %> Execution</h1>
+        <% if(execution.user) { %>
+        Executed by <%= execution.user.firstName %> <% if(execution.user.username) { %>(<a href="https://t.me/<%= execution.user.username %>" target="_blank">@<%= execution.user.username %></a>)<% } %>
+        <% } %>
+      </div>
 
-      <% if(execution.user) { %>
-      <p>Executed by <%= execution.user.firstName %> <% if(execution.user.username) { %>(<a href="https://t.me/<%= execution.user.username %>" target="_blank">@<%= execution.user.username %></a>)<% } %></p>
-      <% } %>
-
-      <p>
-        <h3>Input</h3>
-        <pre><code id="input_code" class="<%= highlightLang %>"><%= execution.input %></code></pre>
-      </p>
+      <div class="execution">
+        <div class="input">
+          <div class="header">Input</div>
+          <pre><code id="input_code" class="<%= highlightLang %>"><%= execution.input %></code></pre>
+        </div>
   
-      <p>
-        <h3>Output</h3>
-        <pre><code class="hljs"><%= execution.output %></code></pre>
-      </p>
+        <div class="output">
+          <div class="header">Output</div>
+          <pre><code class="hljs"><%= execution.output %></code></pre>
+        </div>
+      </div>
+
+      <footer>
+        Powered by <a href="https://t.me/CompileBot">Compile Bot</a>.
+      </footer>
     </div>
+
     <script>
       hljs.highlightBlock(document.getElementById("input_code"))
     </script>

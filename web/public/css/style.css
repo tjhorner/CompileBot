@@ -1,6 +1,6 @@
-.container {
+/* .container {
   margin-top: 20px;
-}
+} */
 
 /* pre {
   border: 1px solid #b3b3b3;
@@ -8,3 +8,96 @@
   padding: 10px;
   border-radius: 2px;
 } */
+
+@import url('https://fonts.googleapis.com/css?family=Fira+Mono');
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+*, * * {
+  box-sizing: border-box;
+}
+
+.wrapper {
+  flex-direction: column;
+  background: #1E1E1E;
+  color: #DCDCDC;
+}
+
+.title {
+  padding: 10px;
+}
+
+.title h1 {
+  font-size: 2em;
+  margin: 0;
+  margin-bottom: 5px;
+}
+
+.wrapper, .execution {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+pre, code {
+  margin: 0;
+  height: 100%;
+}
+
+code {
+  border-radius: 0;
+  border: none;
+  background: #0e0e0e !important;
+  padding: 1em !important;
+}
+
+.input, .output {
+  flex-grow: 1;
+  width: 50%;
+  height: 100%;
+  background: #0e0e0e;
+}
+
+.header {
+  padding: 5px;
+  padding-left: 1em;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #737373;
+  background: #212121;
+}
+
+footer {
+  padding: 10px;
+  letter-spacing: 1px;
+  color: #737373;
+  background: #212121;
+}
+
+.output {
+  border-left: 1px solid #252525;
+}
+
+@media only screen and (max-width: 480px) {
+  .execution {
+    flex-direction: column;
+  }
+
+  .input, .output {
+    width: 100%;
+    height: auto;
+    max-height: 50%;
+  }
+
+  .output {
+    border: none;
+  }
+
+  .title h1 {
+    font-size: 1.4em;
+  }
+}
