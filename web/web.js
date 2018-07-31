@@ -41,7 +41,7 @@ app.get("/execution/test", (req, res) => {
     input: "const e = require('no')\n\nconsole.log('rrrrrrrrrrr\\nbbbbbbbbb')\nvar x = 3\n// yep\n// TODO: random shit",
     output: "rrrrrrrrrrr\nbbbbbbbbb",
     language: "JavaScript (Node.js)"
-  }, highlightLang: "javascripts" })
+  }, highlightLang: "javascript" })
 })
 
 app.get("/execution/:id", (req, res) => {

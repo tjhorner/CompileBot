@@ -827,6 +827,50 @@ telegram.onText(/^\/stats$/, (msg, matches) => {
   }
 })
 
+telegram.onText(/^\/optout$/, (msg, matches) => {
+  findOrCreateUser(msg.from)
+    .then(user => {
+      user.optOutBroadcasts = true
+      user.save()
+
+      telegram.sendMessage(msg.from.id, "You've successfully opted out of announcements. If you change your mind, use /optin.")
+    })
+})
+
+telegram.onText(/^\/optin$/, (msg, matches) => {
+  findOrCreateUser(msg.from)
+    .then(user => {
+      user.optOutBroadcasts = false
+      user.save()
+
+      telegram.sendMessage(msg.from.id, "You've successfully opted back into announcements. If you change your mind, use /optout.")
+    })
+})
+
+telegram.onText(/^\/announce$/, (msg, matches) => {
+  if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
+    var userId = "78442301"
+    var message =
+`Hello! I've got a few announcements for you:
+
+*CompileBot has gone international!*
+Multiple language support has been added intenrally, but we only have English for now. If you are fluent in English and another language you'd like to see CompileBot support, please let @bcrypt know. For your time, you'll be given *10000* free executions _(which should probably set you for life...)
+
+*The execution webpage has been redesigned!*
+The page now has a full dark theme and generally looks a lot nicer. If you want to check it out, [here](https://compilebot.horner.tj/execution/5b60cf20c22fad72fa66e4e1) is a good execution to try it with.
+
+That's all for now. If you want to opt-out of these (very) infrequent announcements, you can send /optout.`
+
+    telegram.sendMessage(userId, message, { parse_mode: "Markdown" })
+      .then(sentMsg => {
+        telegram.sendPhoto(userId, "AgADAQADrqcxGy27CE8vB38U-JmUVYcSCzAABM6WpcfSqJifK3MAAgI", {
+          caption: "Here's what the new page design looks like.",
+          reply_to_message_id: sentMsg.message_id
+        })
+      })
+  }
+})
+
 if(debugMode) {
   telegram.onText(/^\/resetexecs$/, msg => {
     findOrCreateUser(msg.from)
