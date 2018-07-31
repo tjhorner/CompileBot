@@ -584,6 +584,7 @@ telegram.on("callback_query", query => {
           user.save()
 
           telegram.sendMessage(user.telegramId, i18n.string(lang.code, "changed_language", lang.name), { parse_mode: "Markdown" })
+          telegram.answerCallbackQuery(query.id)
         }
       } else if(user.executions > 0) {
         var lang = languages.filter(lang => lang.alias === query.data.split(":")[1])[0]
@@ -863,14 +864,12 @@ telegram.onText(/^\/lang$/, (msg, matches) => {
       telegram.sendMessage(msg.from.id, getString(user, "choose_new_lang"), {
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [
-            i18n.languages.map(language => {
-              return {
-                text: `${language.flag} ${language.name}`,
-                callback_data: `LANG:${language.code}`
-              }
-            })
-          ]
+          inline_keyboard: i18n.languages.map(language => [
+            {
+              text: `${language.flag} ${language.name}`,
+              callback_data: `LANG:${language.code}`
+            }
+          ])
         }
       })
     })
