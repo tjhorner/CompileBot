@@ -70,6 +70,8 @@ code {
   letter-spacing: 2px;
   color: #737373;
   background: #212121;
+  position: sticky;
+  top: 0px;
 }
 
 footer {
