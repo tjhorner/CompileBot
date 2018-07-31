@@ -854,7 +854,7 @@ telegram.onText(/^\/announce$/, (msg, matches) => {
 `Hello! I've got a few announcements for you:
 
 *CompileBot has gone international!*
-Multiple language support has been added intenrally, but we only have English for now. If you are fluent in English and another language you'd like to see CompileBot support, please let @bcrypt know. For your time, you'll be given *10000* free executions _(which should probably set you for life...)
+Multiple language support has been added intenrally, but we only have English for now. If you are fluent in English and another language you'd like to see CompileBot support, please let @bcrypt know. For your time, you'll be given *10000* free executions _(which should probably set you for life...)_
 
 *The execution webpage has been redesigned!*
 The page now has a full dark theme and generally looks a lot nicer. If you want to check it out, [here](https://compilebot.horner.tj/execution/5b60cf20c22fad72fa66e4e1) is a good execution to try it with.
