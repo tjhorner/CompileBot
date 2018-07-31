@@ -57,6 +57,7 @@ code {
 
 .input, .output {
   flex-grow: 1;
+  overflow-y: auto;
   width: 50%;
   height: 100%;
   background: #0e0e0e;
