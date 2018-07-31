@@ -1,6 +1,20 @@
-{
-  "en-US": {
+[
+  {
+    "code": "en-US",
+    "aliases": [ "en", "en-UK", "en-CA" ],
     "name": "English (US)",
     "flag": "🇺🇸"
+  },
+  {
+    "code": "it-IT",
+    "aliases": [ "it" ],
+    "name": "Italian (IT)",
+    "flag": "🇮🇹"
+  },
+  {
+    "code": "de-DE",
+    "aliases": [ "de" ],
+    "name": "German (DE)",
+    "flag": "🇩🇪"
   }
-}
+]

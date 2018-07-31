@@ -10,7 +10,7 @@ const Telegram = require('node-telegram-bot-api')
 const { User, Execution } = require('./db')
 
 const I18n = require('./lib/i18n')
-const lang = new I18n()
+const i18n = new I18n()
 
 // internal web server deps
 const express = require('express')
@@ -158,7 +158,7 @@ var docker = new Docker()
 
 // TODO: use telegraf+middleware instead
 function getString(user, key, ...values) {
-  return lang.string(user.languageCode, key, ...values)
+  return i18n.string(user.languageCode, key, ...values)
 }
 
 function escapeHTML(str) {
@@ -184,11 +184,11 @@ function findOrCreateUser(telegramUser) {
         } else {
           var user = users[0]
 
-          if(user.firstName !== telegramUser.first_name || user.lastName !== telegramUser.last_name || user.username !== telegramUser.username || user.languageCode !== telegramUser.language_code) {
+          if(user.firstName !== telegramUser.first_name || user.lastName !== telegramUser.last_name || user.username !== telegramUser.username || !user.languageCode) {
             user.firstName = telegramUser.first_name
             user.lastName = telegramUser.last_name
             user.username = telegramUser.username
-            user.languageCode = telegramUser.language_code
+            if(!user.languageCode) user.languageCode = telegramUser.language_code
 
             user.save().then(user => resolve(user))
           } else resolve(user)
@@ -576,7 +576,16 @@ telegram.on("successful_payment", msg => {
 telegram.on("callback_query", query => {
   findOrCreateUser(query.from)
     .then(user => {
-      if(user.executions > 0) {
+      if(query.data.split(":")[0] === "LANG") {
+        var lang = i18n.getLanguage(query.data.split(":")[1])
+        
+        if(lang) {
+          user.languageCode = lang.code
+          user.save()
+
+          telegram.sendMessage(user.telegramId, i18n.string(lang.code, "changed_language", lang.name), { parse_mode: "Markdown" })
+        }
+      } else if(user.executions > 0) {
         var lang = languages.filter(lang => lang.alias === query.data.split(":")[1])[0]
         var session = sessions[query.from.id.toString()]
 
@@ -848,6 +857,25 @@ telegram.onText(/^\/optin$/, (msg, matches) => {
     })
 })
 
+telegram.onText(/^\/lang$/, (msg, matches) => {
+  findOrCreateUser(msg.from)
+    .then(user => {
+      telegram.sendMessage(msg.from.id, getString(user, "choose_new_lang"), {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [
+            i18n.languages.map(language => [
+              {
+                text: `${language.flag} ${language.name}`,
+                callback_data: `LANG:${language.code}`
+              }
+            ])
+          ]
+        }
+      })
+    })
+})
+
 telegram.onText(/^\/announce$/, (msg, matches) => {
   if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
     User.find()
@@ -858,7 +886,7 @@ telegram.onText(/^\/announce$/, (msg, matches) => {
 `Hello! I've got a few announcements for you:
 
 *CompileBot has gone international!*
-Multiple language support has been added intenrally, but we only have English for now. If you are fluent in English and another language you'd like to see CompileBot support, please let @bcrypt know. For your time, you'll be given *10000* free executions _(which should probably set you for life...)_
+Multiple language support has been added internally, but we only have English for now. If you are fluent in English and another language you'd like to see CompileBot support, please let @bcrypt know. For your time, you'll be given *10000* free executions _(which should probably set you for life...)_
 
 *The execution webpage has been redesigned!*
 The page now has a full dark theme and generally looks a lot nicer. If you want to check it out, [here](https://compilebot.horner.tj/execution/5b60cf20c22fad72fa66e4e1) is a good execution to try it with.
