@@ -583,7 +583,7 @@ telegram.on("callback_query", query => {
           user.languageCode = lang.code
           user.save()
 
-          telegram.sendMessage(user.telegramId, i18n.string(lang.code, "changed_language", lang.name), { parse_mode: "Markdown" })
+          telegram.sendMessage(user.telegramId, i18n.string(lang.code, "changed_language"), { parse_mode: "Markdown" })
           telegram.answerCallbackQuery(query.id)
         }
       } else if(user.executions > 0) {

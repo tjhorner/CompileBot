@@ -39,4 +39,4 @@ thanks_for_reviewing: "*Thanks for reviewing CompileBot!* For doing so, we've ad
 redeem_instructions: "To redeem your free executions, please review me [here](https://t.me/storebot?start=compilebot), come back, and then send /redeemexecs again. If you have already submitted a review and I can't find it, please try re-submitting it through StoreBot."
 bot_admin_given_execs: "*A bot admin has given you %s free executions!* How generous of them. You now have %s executions."
 choose_new_lang: "Select the language that I should use when talking to you.\n\nDon't see your language listed here? Contact @bcrypt if you'd like to translate and get *10000* free executions for your time."
-changed_language: "From now on, I'll talk to you in *%s*."
+changed_language: "From now on, I'll talk to you in *English*."
