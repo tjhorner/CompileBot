@@ -725,7 +725,7 @@ telegram.onText(/^\/getexecutions$/, msg => {
       else
         message += getString(user, "no_free_execs")
 
-      message += `\n\n/exec1000 — *1000 executions* for $5.00 ($0.005/exec)\n/exec100 — *100 executions* for $1.00 ($0.01/exec)\n\nYou currently have *${user.executions}* executions left.`
+      message += `\n\n/exec1000 — *1000 executions* ${getString(user, "for")} $5.00 ($0.005/exec)\n/exec100 — *100 executions* ${getString(user, "for")} $1.00 ($0.01/exec)\n\n${getString(user, "current_execs", user.executions)}`
 
       telegram.sendMessage(msg.from.id, message, {
         parse_mode: "Markdown"
@@ -747,7 +747,7 @@ telegram.onText(/^\/help$/, msg => {
 })
 
 telegram.onText(/^\/exec100$/, msg => {
-  telegram.sendInvoice(msg.from.id, "100 Executions", "100 code executions priced at $0.01 per execution.", "exec100", debugMode ? config.stripeTestToken : config.stripeLiveToken, "buy100", "USD", [
+  telegram.sendInvoice(msg.from.id, "100 Executions", getString(user, "execs_invoice_desc", "100", "$0.01"), "exec100", debugMode ? config.stripeTestToken : config.stripeLiveToken, "buy100", "USD", [
     {
       label: "100 Executions",
       amount: 100
@@ -756,7 +756,7 @@ telegram.onText(/^\/exec100$/, msg => {
 })
 
 telegram.onText(/^\/exec1000$/, msg => {
-  telegram.sendInvoice(msg.from.id, "1000 Executions", "1000 code executions priced at $0.005 per execution.", "exec1000", debugMode ? config.stripeTestToken : config.stripeLiveToken, "buy1000", "USD", [
+  telegram.sendInvoice(msg.from.id, "1000 Executions", getString(user, "execs_invoice_desc", "1000", "$0.05"), "exec1000", debugMode ? config.stripeTestToken : config.stripeLiveToken, "buy1000", "USD", [
     {
       label: "1000 Executions",
       amount: 500
