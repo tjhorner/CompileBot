@@ -11,6 +11,11 @@ const User = mongoose.model("User", {
   firstName: String,
   lastName: String,
   username: String,
+  languageCode: String,
+  optOutBroadcasts: {
+    type: Boolean,
+    default: false
+  },
   executions: {
     type: Number,
     default: 50

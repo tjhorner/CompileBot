@@ -9,6 +9,9 @@ const StoreBot = require('./lib/storebot')
 const Telegram = require('node-telegram-bot-api')
 const { User, Execution } = require('./db')
 
+const I18n = require('./lib/i18n')
+const lang = new I18n()
+
 // internal web server deps
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -153,6 +156,11 @@ var sessions = { }
 
 var docker = new Docker()
 
+// TODO: use telegraf+middleware instead
+function getString(user, key, ...values) {
+  return lang.string(user.languageCode, key, ...values)
+}
+
 function escapeHTML(str) {
   return str.replace(/\&/gi, "&amp;").replace(/\</gi, "&lt;").replace(/\>/gi, "&gt;")
 }
@@ -166,7 +174,8 @@ function findOrCreateUser(telegramUser) {
             telegramId: telegramUser.id,
             firstName: telegramUser.first_name,
             lastName: telegramUser.last_name,
-            username: telegramUser.username
+            username: telegramUser.username,
+            languageCode: telegramUser.language_code
           }).then(user => resolve(user))
           
           telegram.sendMessage(78442301, `*New user:* [${telegramUser.id}](tg://user?id=${telegramUser.id})`, {
@@ -175,10 +184,11 @@ function findOrCreateUser(telegramUser) {
         } else {
           var user = users[0]
 
-          if(user.firstName !== telegramUser.first_name || user.lastName !== telegramUser.last_name || user.username !== telegramUser.username) {
+          if(user.firstName !== telegramUser.first_name || user.lastName !== telegramUser.last_name || user.username !== telegramUser.username || user.languageCode !== telegramUser.language_code) {
             user.firstName = telegramUser.first_name
             user.lastName = telegramUser.last_name
             user.username = telegramUser.username
+            user.languageCode = telegramUser.language_code
 
             user.save().then(user => resolve(user))
           } else resolve(user)
@@ -261,7 +271,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
     if(stdoutChanged) {
       stdoutChanged = false
 
-      var msgText = `<i>Currently running code...</i>\n\n<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(currentStdout)}</pre>`
+      var msgText = `<i>${getString(user, "running_code")}</i>\n\n<b>${getString(user, "language")}</b>\n${lang.name}\n\n<b>${getString(user, "input")}</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>${getString(user, "output")}</b>\n<pre>${escapeHTML(currentStdout)}</pre>`
 
       if(msgText.length > 4096) {
         var editParams = {
@@ -276,7 +286,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
           editParams.inline_message_id = inlineMessageId
         }
 
-        telegram.editMessageText("_This output is too long to be displayed live. Please wait until execution is complete._", editParams)
+        telegram.editMessageText(`_${getString(user, "too_long_live")}_`, editParams)
         clearInterval(liveOutputInterval)
       } else {
         var editParams = {
@@ -310,7 +320,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
         user.executions--
         user.save()
 
-        var msgText = `<b>Language</b>\n${lang.name}\n\n<b>Input</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(sandboxResult)}</pre>`
+        var msgText = `<b>${getString(user, "language")}</b>\n${lang.name}\n\n<b>${getString(user, "input")}</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>${getString(user, "output")}</b>\n<pre>${escapeHTML(sandboxResult)}</pre>`
         if(msgText.length > 4096) {
           var editParams = {
             parse_mode: "Markdown",
@@ -318,7 +328,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
               inline_keyboard: [
                 [
                   {
-                    text: "View full output",
+                    text: getString(user, "view_full"),
                     url: `https://compilebot.horner.tj/execution/${execution._id}`
                   }
                 ]
@@ -341,13 +351,13 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
               inline_keyboard: [
                 [
                   {
-                    text: "View full output",
+                    text: getString(user, "view_full"),
                     url: `https://compilebot.horner.tj/execution/${execution._id}`
                   }
                 ],
                 [
                   {
-                    text: "Share output",
+                    text: getString(user, "share_output"),
                     switch_inline_query: `exec:${execution._id}`
                   }
                 ]
@@ -371,10 +381,10 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
         user.executions--
         user.save()
 
-        var msgText = "_This code took too long to run, so its execution was terminated._"
+        var msgText = `_${getString(user, "too_long_to_run")}_`
       } else {
         console.log("Uh oh", err)
-        var msgText = "_There was an internal error compiling this code :(_\n_(This did not count toward your executions.)_"
+        var msgText = `_${getString(user, "internal_error")}_\n_${getString(user, "did_not_count")}_`
       }
 
       var editParams = {
@@ -407,16 +417,16 @@ telegram.on("inline_query", query => {
               var messageText = ""
 
               if(exec.user.telegramId !== query.from.id)
-                messageText += `<b>Author</b>\n<a href="tg://user?id=${exec.user.telegramId}">${escapeHTML(exec.user.firstName)}</a>\n\n`
+                messageText += `<b>${getString(user, "author")}</b>\n<a href="tg://user?id=${exec.user.telegramId}">${escapeHTML(exec.user.firstName)}</a>\n\n`
 
-              messageText += `<b>Language</b>\n${exec.language}\n\n<b>Input</b>\n<pre>${escapeHTML(exec.input)}</pre>\n\n<b>Output</b>\n<pre>${escapeHTML(exec.output)}</pre>`
+              messageText += `<b>${getString(user, "language")}</b>\n${exec.language}\n\n<b>${getString(user, "input")}</b>\n<pre>${escapeHTML(exec.input)}</pre>\n\n<b>${getString(user, "output")}</b>\n<pre>${escapeHTML(exec.output)}</pre>`
 
               telegram.answerInlineQuery(query.id, [
                 {
                   type: "article",
                   id: "share",
-                  title: `Share ${exec.language} execution`,
-                  description: `Share this ${exec.language} execution in the current chat`,
+                  title: getString(user, "share_execution", exec.language),
+                  description: getString(user, "share_execution_long", exec.language),
                   input_message_content: {
                     message_text: messageText,
                     parse_mode: "HTML"
@@ -425,13 +435,13 @@ telegram.on("inline_query", query => {
                     inline_keyboard: [
                       [
                         {
-                          text: "View full output",
+                          text: getString(user, "view_full"),
                           url: `https://compilebot.horner.tj/execution/${exec._id}`
                         }
                       ],
                       [
                         {
-                          text: "Share output",
+                          text: getString(user, "share_output"),
                           switch_inline_query: `exec:${exec._id}`
                         }
                       ]
@@ -455,7 +465,7 @@ telegram.on("inline_query", query => {
           if(query.query.trim() === "") {
             telegram.answerInlineQuery(query.id, [ ], {
               switch_pm_parameter: "start",
-              switch_pm_text: "Type some code then select a language...",
+              switch_pm_text: getString(user, "type_some_code"),
               cache_time: 10,
               is_personal: true
             })
@@ -465,9 +475,9 @@ telegram.on("inline_query", query => {
                 type: "article",
                 id: lang.alias,
                 title: lang.name,
-                description: `Run this code as ${lang.name}`,
+                description: getString(user, "run_as", lang.name),
                 input_message_content: {
-                  message_text: `_Just a sec, running this ${lang.name} code..._`,
+                  message_text: `_${getString(user, "running_code_as", lang.name)}_`,
                   parse_mode: "Markdown"
                 },
                 reply_markup: {
@@ -490,7 +500,7 @@ telegram.on("inline_query", query => {
         } else {
           telegram.answerInlineQuery(query.id, [ ], {
             switch_pm_parameter: "getexecs",
-            switch_pm_text: "No executions left! Select to get more.",
+            switch_pm_text: getString(user, "no_execs_left"),
             cache_time: 10,
             is_personal: true
           })
@@ -508,7 +518,7 @@ telegram.on("chosen_inline_result", result => {
           var lang = languages.filter(lang => lang.alias === result.result_id)[0]
           runCode(lang, result.query, user, null, result.inline_message_id)
         } else {
-          var msgText = "_Out of executions! Get more with the button below._"
+          var msgText = `_${getString(user, "out_of_execs")}_`
           telegram.editMessageText(msgText, {
             inline_message_id: result.inline_message_id,
             parse_mode: "Markdown",
@@ -516,7 +526,7 @@ telegram.on("chosen_inline_result", result => {
               inline_keyboard: [
                 [
                   {
-                    text: "Get more executions",
+                    text: getString(user, "get_more_execs"),
                     url: "https://t.me/CompileBot?start=getexecs"
                   }
                 ]
@@ -556,7 +566,7 @@ telegram.on("successful_payment", msg => {
 
       user.executions += execAmount
       user.save().then(() => {
-        telegram.sendMessage(msg.from.id, `I have added *${execAmount}* code executions to your account. Thank you for your purchase :)`, {
+        telegram.sendMessage(msg.from.id, getString(user, "added_execs", execAmount), {
           parse_mode: "Markdown"
         })
       })
@@ -571,7 +581,7 @@ telegram.on("callback_query", query => {
         var session = sessions[query.from.id.toString()]
 
         if(session.code && session.compileMessageId) {
-          telegram.editMessageText(`_Just a sec, running this ${lang.name} code..._`, {
+          telegram.editMessageText(`_${getString(user, "running_code_as", lang.name)}_`, {
             chat_id: query.from.id,
             message_id: session.compileMessageId,
             parse_mode: "Markdown"
@@ -579,14 +589,14 @@ telegram.on("callback_query", query => {
 
           runCode(lang, session.code, user, session.compileMessageId, null)
         } else {
-          telegram.editMessageText(`_Your session has expired, please send the command again._`, {
+          telegram.editMessageText(`_${getString(user, "session_expired")}_`, {
             chat_id: query.from.id,
             message_id: session.compileMessageId,
             parse_mode: "Markdown"
           })
         }
       } else {
-        telegram.editMessageText(`_Out of executions! Get more with the button below._`, {
+        telegram.editMessageText(`_${getString(user, "out_of_execs")}_`, {
           chat_id: query.from.id,
           message_id: session.compileMessageId,
           parse_mode: "Markdown",
@@ -594,7 +604,7 @@ telegram.on("callback_query", query => {
             inline_keyboard: [
               [
                 {
-                  text: "Get more executions",
+                  text: getString(user, "get_more_execs"),
                   url: "https://t.me/CompileBot?start=getexecs"
                 }
               ]
@@ -611,16 +621,17 @@ telegram.on("callback_query", query => {
 
 function sendStartMessage(msg) {
   findOrCreateUser(msg.from)
+    .then(user => {
+      var welcomeText = `${getString(user, "welcome_one")}\n\n${getString(user, "welcome_two")}\n\n`
 
-  var welcomeText = "Hello! I am *Compile Bot*. You can give me pieces of code to compile/run, and I'll give you back the output.\n\nI currently support these languages:\n\n"
-
-  languages.forEach(lang => {
-    welcomeText += `- ${lang.name}\n`
-  })
-
-  welcomeText += "\nYou can use me with inline mode to easily share snippets and their results with friends. To do so, simply type `@CompileBot` into your message box, then a space, then your code. Choose the language you want and I'll compile it! Want a demo? Send /inline.\n\nYou can also use the /compile command to run larger pieces of code (Telegram has a 512-character limit on inline mode)."
-
-  telegram.sendMessage(msg.from.id, welcomeText, { parse_mode: "Markdown" })
+      languages.forEach(lang => {
+        welcomeText += `- ${lang.name}\n`
+      })
+    
+      welcomeText += `\n${getString(user, "welcome_three")}\n\n${getString(user, "welcome_four")}`
+    
+      telegram.sendMessage(msg.from.id, welcomeText, { parse_mode: "Markdown" })
+    })
 }
 
 // COMMAND /start (without params)
@@ -628,33 +639,42 @@ telegram.onText(/^\/start$/, sendStartMessage)
 
 // COMMAND /start (with params)
 telegram.onText(/^\/start (.+)/, (msg, matches) => {
-  switch(matches[1]) {
-    case "getexecs":
-      telegram.sendMessage(msg.from.id, `*You're out of executions!* You can get some more here:\n\n/exec1000 — *1000 executions* for $5.00 ($0.005/exec)\n/exec100 — *100 executions* for $1.00 ($0.01/exec)`, {
-        parse_mode: "Markdown"
-      })
-      break
-    default:
-      sendStartMessage(msg)
-      break
-  }
+  findOrCreateUser(msg.from)
+    .then(user => {
+      switch(matches[1]) {
+        case "getexecs":
+          telegram.sendMessage(msg.from.id, `${getString(user, "get_more")}\n\n/exec1000 — *1000 executions* for $5.00 ($0.005/exec)\n/exec100 — *100 executions* for $1.00 ($0.01/exec)`, {
+            parse_mode: "Markdown"
+          })
+          break
+        default:
+          sendStartMessage(msg)
+          break
+      }
+    })
 })
 
 // COMMAND /inline
 telegram.onText(/^\/inline$/, msg => {
-  telegram.sendMessage(msg.from.id, "To compile code with inline mode, simply type `@CompileBot` into your message box, a space, then your code. Here is a demo:", { parse_mode: "Markdown" })
-    .then(newMsg => {
-      telegram.sendDocument(msg.from.id, "CgADAQADBAAD-tPQTfXrMu4ndMa5Ag", {
-        reply_to_message_id: newMsg.message_id
-      })
+  findOrCreateUser(msg.from)
+    .then(user => {
+      telegram.sendMessage(msg.from.id, getString(user, "inline_demo"), { parse_mode: "Markdown" })
+        .then(newMsg => {
+          telegram.sendDocument(msg.from.id, "CgADAQADBAAD-tPQTfXrMu4ndMa5Ag", {
+            reply_to_message_id: newMsg.message_id
+          })
+        })
     })
 })
 
 // COMMAND /compile (without params)
 telegram.onText(/^\/compile$/, msg => {
-  telegram.sendMessage(msg.from.id, "To use this command, type `/compile` then your code. For example, `/compile print \"hello\"`. You will be asked which language you want to run it as later.", {
-    parse_mode: "Markdown"
-  })
+  findOrCreateUser(msg.from)
+    .then(user => {
+      telegram.sendMessage(msg.from.id, getString(user, "compile_help"), {
+        parse_mode: "Markdown"
+      })
+    })
 })
 
 // COMMAND /compile (with params)
@@ -671,7 +691,7 @@ telegram.onText(/^\/compile ((.|\n)+)/, (msg, matches) => {
 
         session.code = matches[1].trim()
 
-        telegram.sendMessage(msg.from.id, "Which language do you want to run this code as?", {
+        telegram.sendMessage(msg.from.id, getString(user, "which_lang"), {
           reply_to_message_id: msg.message_id,
           reply_markup: {
             inline_keyboard: languagesKeyboard
@@ -680,7 +700,7 @@ telegram.onText(/^\/compile ((.|\n)+)/, (msg, matches) => {
           session.compileMessageId = botMsg.message_id
         })
       } else {
-        telegram.sendMessage(msg.from.id, "You are out of code executions! Use /getexecutions to get more.")
+        telegram.sendMessage(msg.from.id, getString(user, "use_getexecutions"))
       }
     })
 })
@@ -688,12 +708,12 @@ telegram.onText(/^\/compile ((.|\n)+)/, (msg, matches) => {
 telegram.onText(/^\/getexecutions$/, msg => {
   findOrCreateUser(msg.from)
     .then(user => {
-      var message = "*Need more code executions?* "
+      var message = `*${getString(user, "need_more_execs")}* `
 
       if(!user.redeemedFreeExecutions)
-        message += "You can get 100 *FREE* executions by reviewing CompileBot. Send /redeemexecs for more details. You can also get some more here:"
+        message += getString(user, "free_execs")
       else
-        message += "You can get some more here:"
+        message += getString(user, "no_free_execs")
 
       message += `\n\n/exec1000 — *1000 executions* for $5.00 ($0.005/exec)\n/exec100 — *100 executions* for $1.00 ($0.01/exec)\n\nYou currently have *${user.executions}* executions left.`
 
@@ -704,12 +724,15 @@ telegram.onText(/^\/getexecutions$/, msg => {
 })
 
 telegram.onText(/^\/help$/, msg => {
-  User.count()
-    .then(userCount => {
-      telegram.sendMessage(msg.from.id, `Here are some answers to questions you may have.\n\n*How do I use the bot?*\nSend /start and the bot will let you know everything you need to know.\n\n*Is the bot open source?*\nNo, not at the moment, and there are currently no plans to make it so in the future.\n\n*Where do I report bugs?*\nhttps://github.com/tjhorner/CompileBotIssues/issues\n\n*Can I donate?*\nThere's no donation method, but you can buy executions instead with /getexecutions. Thanks for your support!\n\n*How many people have used this bot?*\n${userCount}.\n\n*I have another question not listed here.*\nLet @bcrypt know.`, {
-        disable_web_page_preview: true,
-        parse_mode: "Markdown"
-      })
+  findOrCreateUser(msg.from)
+    .then(user => {
+      User.count()
+        .then(userCount => {
+          telegram.sendMessage(msg.from.id, getString(user, "faq", userCount), {
+            disable_web_page_preview: true,
+            parse_mode: "Markdown"
+          })
+        })
     })
 })
 
@@ -735,7 +758,7 @@ telegram.onText(/^\/redeemexecs$/, msg => {
   findOrCreateUser(msg.from)
     .then(user => {
       if(user.redeemedFreeExecutions) {
-        telegram.sendMessage(msg.from.id, "You already redeemed your free executions!")
+        telegram.sendMessage(msg.from.id, getString())
       } else {
         StoreBot.getReviews("compilebot", 0, 20)
           .then(reviews => {
@@ -745,10 +768,10 @@ telegram.onText(/^\/redeemexecs$/, msg => {
               user.redeemedFreeExecutions = true
               user.executions += 100
               user.save().then(() => {
-                telegram.sendMessage(msg.from.id, `*Thanks for reviewing CompileBot!* For doing so, we've added *100* free executions to your account. Enjoy!`, { parse_mode: "Markdown" })
+                telegram.sendMessage(msg.from.id, getString(user, "thanks_for_reviewing"), { parse_mode: "Markdown" })
               })
             } else {
-              telegram.sendMessage(msg.from.id, `To redeem your free executions, please review me [here](https://t.me/storebot?start=compilebot), come back, and then send /redeemexecs again. If you have already submitted a review and I can't find it, please try re-submitting it through StoreBot.`, { parse_mode: "Markdown" })
+              telegram.sendMessage(msg.from.id, getString(user, "redeem_instructions"), { parse_mode: "Markdown" })
             }
           })
       }
@@ -773,7 +796,7 @@ telegram.onText(/^\/give (.+)$/, (msg, matches) => {
               parse_mode: "Markdown"
             })
 
-            telegram.sendMessage(toUserId, `*A bot admin has given you ${execsToGive} free executions!* How generous of them. You now have ${user.executions} executions.`, {
+            telegram.sendMessage(toUserId, getString(user, "bot_admin_given_execs", execsToGive, user.executions), {
               parse_mode: "Markdown"
             })
           })
