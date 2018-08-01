@@ -864,7 +864,7 @@ telegram.onText(/^\/lang$/, (msg, matches) => {
       telegram.sendMessage(msg.from.id, getString(user, "choose_new_lang"), {
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: i18n.languages.map(language => [
+          inline_keyboard: i18n.languageInfo.map(language => [
             {
               text: `${language.flag} ${language.name}`,
               callback_data: `LANG:${language.code}`
