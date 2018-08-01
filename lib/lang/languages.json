@@ -18,6 +18,12 @@
     "flag": "🇮🇹"
   },
   {
+    "code": "ru",
+    "aliases": [ "ru-RU" ],
+    "name": "Russian",
+    "flag": "🇷🇺"
+  },
+  {
     "code": "de-DE",
     "aliases": [ "de" ],
     "name": "German (DE)",
