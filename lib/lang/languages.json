@@ -6,6 +6,12 @@
     "flag": "🇺🇸"
   },
   {
+    "code": "es",
+    "aliases": [ "es-MX", "es-ES" ],
+    "name": "Spanish",
+    "flag": "🇪🇸"
+  },
+  {
     "code": "it-IT",
     "aliases": [ "it" ],
     "name": "Italian (IT)",
