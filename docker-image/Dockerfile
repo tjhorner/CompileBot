@@ -80,4 +80,4 @@ RUN chmod +x /usr/bin/runjava
 
 RUN apt-get install -y python-pip python3-pip libyaml-dev
 RUN pip3 install pyyaml
-RUN pip install pyyaml
+# RUN pip install pyyaml

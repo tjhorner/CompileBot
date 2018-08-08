@@ -126,7 +126,7 @@ const languages = [
   {
     name: "Go",
     alias: "golang",
-    customCommand: "go run /usercode/usercode.go",
+    customCommand: "go run /usercode/file.go",
     file: "file.go"
   }
 ]
