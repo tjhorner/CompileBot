@@ -19,7 +19,7 @@ RUN apt-get install -y mono-xsp2 mono-xsp2-base
 
 RUN apt-get install -y mono-vbnc
 RUN apt-get install -y npm
-RUN apt-get install -y golang-go	
+# RUN apt-get install -y golang-go
 RUN apt-get install -y nodejs
 
 RUN npm config set strict-ssl false
@@ -81,3 +81,9 @@ RUN chmod +x /usr/bin/runjava
 RUN apt-get install -y python-pip python3-pip libyaml-dev
 RUN pip3 install pyyaml
 # RUN pip install pyyaml
+
+RUN LC_ALL=C.UTF-8 add-apt-repository -y ppa:gophers/archive
+RUN apt-get update
+RUN apt-get install golang-1.10-go
+RUN ln -s /usr/lib/go-1.10/bin/go /usr/bin/go
+RUN chmod +x /usr/lib/go-1.10/bin/go
