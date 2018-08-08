@@ -126,8 +126,8 @@ const languages = [
   {
     name: "Go",
     alias: "golang",
-    customCommand: "go run /usercode/file.go",
-    file: "file.go"
+    customCommand: "go run /usercode/main.go",
+    file: "main.go"
   }
 ]
 
@@ -237,7 +237,7 @@ function runSandbox(language, source, onOutput) {
           Hostname: "compilebot",
           Tty: true,
           Interactive: true,
-          User: "mysql",
+          User: "nobody",
           NetworkDisabled: true,
           HostConfig: {
             Memory: 67108864, // 64 MB
