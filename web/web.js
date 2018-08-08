@@ -23,7 +23,8 @@ var aliasMap = {
   lua50: "lua",
   lua51: "lua",
   lua52: "lua",
-  lua53: "lua"
+  lua53: "lua",
+  golang: "go"
 }
 
 app.use(bodyParser.raw())

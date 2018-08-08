@@ -122,6 +122,12 @@ const languages = [
     alias: "lua53",
     executable: "lua53",
     file: "file.lua"
+  },
+  {
+    name: "Go",
+    alias: "golang",
+    customCommand: "go run /usercode/usercode.go",
+    file: "file.go"
   }
 ]
 
