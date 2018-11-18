@@ -237,7 +237,7 @@ function runSandbox(language, source, onOutput) {
           Hostname: "compilebot",
           Tty: true,
           Interactive: true,
-          User: "1000:1000",
+          User: "mysql",
           NetworkDisabled: true,
           HostConfig: {
             Memory: 67108864, // 64 MB
