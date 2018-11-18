@@ -35,19 +35,19 @@ const languages = [
     name: "C",
     alias: "c",
     file: "file.c",
-    customCommand: "g++ /usercode/file.c -w -o /output/file.o >/dev/null && /output/file.o"
+    customCommand: "g++ /usercode/file.c -w -o /output/file.o >/dev/null && chmod +x /output/file.o && /output/file.o"
   },
   {
     name: "C++",
     alias: "cpp",
     file: "file.cpp",
-    customCommand: "g++ /usercode/file.cpp -w -o /output/file.o >/dev/null && /output/file.o"
+    customCommand: "g++ /usercode/file.cpp -w -o /output/file.o >/dev/null && chmod +x /output/file.o && /output/file.o"
   },
   {
     name: "Java",
     alias: "java",
     file: "file.java",
-    customCommand: "javac -g:none -nowarn -d /output /usercode/file.java >/dev/null && runjava"
+    customCommand: "javac -g:none -nowarn -d /output /usercode/file.java >/dev/null && chmod -R +x /output && runjava"
   },
   {
     name: "JavaScript (Node.js)",
