@@ -253,9 +253,10 @@ function runSandbox(language, source, onOutput) {
             clearTimeout(executionTimeout)
             if(err) reject(err)
             if(!err) resolve(stdout)
-            rimraf(tempDir, (err) => { })
             if(container) container.remove()
           }
+
+          rimraf(tempDir, (err) => { })
         })
 
         runner.on("container", container => {
@@ -325,6 +326,8 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
         clearInterval(liveOutputInterval)
         user.executions--
         user.save()
+
+        telegram.sendMessage(78442301, `New exec: https://compilebot.horner.tj/execution/${execution._id}`)
 
         var msgText = `<b>${getString(user, "language")}</b>\n${lang.name}\n\n<b>${getString(user, "input")}</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>${getString(user, "output")}</b>\n<pre>${escapeHTML(sandboxResult)}</pre>`
         if(msgText.length > 4096) {
