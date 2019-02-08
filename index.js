@@ -879,35 +879,35 @@ telegram.onText(/^\/lang$/, (msg, matches) => {
     })
 })
 
-telegram.onText(/^\/announce$/, (msg, matches) => {
-  if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
-    User.find()
-      .then(users => {
-        users.forEach((user, index) => {
-          setTimeout(() => {
-            var message =
-`Hi! I bring good news. Many of you have asked me how the bot works internally, or if it will ever be open source. Today, those questions will be answered: the bot is now open source under GNU GPL v3!
+// telegram.onText(/^\/announce$/, (msg, matches) => {
+//   if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
+//     User.find()
+//       .then(users => {
+//         users.forEach((user, index) => {
+//           setTimeout(() => {
+//             var message =
+// `Hi! I bring good news. Many of you have asked me how the bot works internally, or if it will ever be open source. Today, those questions will be answered: the bot is now open source under GNU GPL v3!
 
-You can find the repository here: https://git.horner.tj/tj/CompileBot
+// You can find the repository here: https://git.horner.tj/tj/CompileBot
 
-It is a bit bare-bones at the moment -- I will be adding more content to it including a general description on how it works, as well as instructions on how to build/develop/contribute/etc.
+// It is a bit bare-bones at the moment -- I will be adding more content to it including a general description on how it works, as well as instructions on how to build/develop/contribute/etc.
 
-If you'd like to donate to the [single teenager that works on this project](tg://user?id=78442301), you can either buy some executions or donate via cash.app/$tjhorner (or paypal.me/tjhorner if you really need to use PayPal).
+// If you'd like to donate to the [single teenager that works on this project](tg://user?id=78442301), you can either buy some executions or donate via cash.app/$tjhorner (or paypal.me/tjhorner if you really need to use PayPal).
 
-If you want to opt-out of these (very) infrequent announcements, you can send /optout.`
+// If you want to opt-out of these (very) infrequent announcements, you can send /optout.`
 
-            telegram.sendMessage(user.telegramId, message, { parse_mode: "Markdown" })
-              .then(sentMsg => {
-                console.log("sent message", user.telegramId)
-              })
-              .catch(err => {
-                console.log("cannot send message", user.telegramId, err)
-              })
-          }, index * 100)
-        })
-      })
-  }
-})
+//             telegram.sendMessage(user.telegramId, message, { parse_mode: "Markdown" })
+//               .then(sentMsg => {
+//                 console.log("sent message", user.telegramId)
+//               })
+//               .catch(err => {
+//                 console.log("cannot send message", user.telegramId, err)
+//               })
+//           }, index * 100)
+//         })
+//       })
+//   }
+// })
 
 if(debugMode) {
   telegram.onText(/^\/resetexecs$/, msg => {
