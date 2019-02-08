@@ -17,6 +17,10 @@ It works in PM or with inline mode. It currently supports these languages:
 - Lua 5.3
 - Go
 
+# Donation
+
+If you'd like to donate to this project, you can do so via [Cash App](https://cash.app/$tjhorner) or [PayPal](https://paypal.me/tjhorner). Any donations are much appreciated.
+
 # Development
 
 Instructions on development and building coming soon.

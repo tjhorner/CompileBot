@@ -879,39 +879,35 @@ telegram.onText(/^\/lang$/, (msg, matches) => {
     })
 })
 
-// telegram.onText(/^\/announce$/, (msg, matches) => {
-//   if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
-//     User.find()
-//       .then(users => {
-//         users.forEach((user, index) => {
-//           setTimeout(() => {
-//             var message =
-// `Hello! I've got a few announcements for you:
+telegram.onText(/^\/announce$/, (msg, matches) => {
+  if(config.admins.indexOf(msg.from.id.toString()) !== -1) {
+    User.find()
+      .then(users => {
+        users.forEach((user, index) => {
+          setTimeout(() => {
+            var message =
+`Hi! I bring good news. Many of you have asked me how the bot works internally, or if it will ever be open source. Today, those questions will be answered: the bot is now open source under GNU GPL v3!
 
-// *CompileBot has gone international!*
-// Multiple language support has been added internally, but we only have English for now. If you are fluent in English and another language you'd like to see CompileBot support, please let @bcrypt know. For your time, you'll be given *10000* free executions _(which should probably set you for life...)_
+You can find the repository here: https://git.horner.tj/tj/CompileBot
 
-// *The execution webpage has been redesigned!*
-// The page now has a full dark theme and generally looks a lot nicer. If you want to check it out, [here](https://compilebot.horner.tj/execution/5b60cf20c22fad72fa66e4e1) is a good execution to try it with.
+It is a bit bare-bones at the moment -- I will be adding more content to it including a general description on how it works, as well as instructions on how to build/develop/contribute/etc.
 
-// That's all for now. If you want to opt-out of these (very) infrequent announcements, you can send /optout.`
-                  
-//             telegram.sendMessage(user.telegramId, message, { parse_mode: "Markdown" })
-//               .then(sentMsg => {
-//                 console.log("sent message", user.telegramId)
-//                 telegram.sendPhoto(user.telegramId, "AgADAQADrqcxGy27CE8vB38U-JmUVYcSCzAABM6WpcfSqJifK3MAAgI", {
-//                   caption: "Here's what the new page design looks like.",
-//                   reply_to_message_id: sentMsg.message_id
-//                 })
-//               })
-//               .catch(err => {
-//                 console.log("cannot send message", user.telegramId, err)
-//               })
-//           }, index * 100)
-//         })
-//       })
-//   }
-// })
+If you'd like to donate to the [single teenager that works on this project](tg://user?id=78442301), you can either buy some executions or donate via cash.app/$tjhorner (or paypal.me/tjhorner if you really need to use PayPal).
+
+If you want to opt-out of these (very) infrequent announcements, you can send /optout.`
+
+            telegram.sendMessage(user.telegramId, message, { parse_mode: "Markdown" })
+              .then(sentMsg => {
+                console.log("sent message", user.telegramId)
+              })
+              .catch(err => {
+                console.log("cannot send message", user.telegramId, err)
+              })
+          }, index * 100)
+        })
+      })
+  }
+})
 
 if(debugMode) {
   telegram.onText(/^\/resetexecs$/, msg => {
