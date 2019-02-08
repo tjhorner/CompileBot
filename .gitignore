@@ -2,3 +2,4 @@
 node_modules
 web/node_modules
 config.json
+web/config.json
