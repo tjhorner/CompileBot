@@ -241,7 +241,10 @@ function runSandbox(language, source, onOutput) {
             Binds: [ `${tempDirExt}:/usercode` ],
             Runtime: "runsc"
           },
-          Env: [ "NODE_PATH=/usr/local/lib/node_modules" ],
+          Env: [
+            "NODE_PATH=/usr/local/lib/node_modules",
+            "TERM=xterm-mono"
+          ],
           Name: sandboxId
         }, (err, data, container) => {
           if(!didTimeout) {
