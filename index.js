@@ -35,13 +35,13 @@ const languages = [
     name: "C",
     alias: "c",
     file: "file.c",
-    customCommand: "g++ /usercode/file.c -w -o /output/file.o >/dev/null && chmod +x /output/file.o && /output/file.o"
+    customCommand: "g++ -fdiagnostics-color=never /usercode/file.c -w -o /output/file.o >/dev/null && chmod +x /output/file.o && /output/file.o"
   },
   {
     name: "C++",
     alias: "cpp",
     file: "file.cpp",
-    customCommand: "g++ /usercode/file.cpp -w -o /output/file.o >/dev/null && chmod +x /output/file.o && /output/file.o"
+    customCommand: "g++ -fdiagnostics-color=never /usercode/file.cpp -w -o /output/file.o >/dev/null && chmod +x /output/file.o && /output/file.o"
   },
   {
     name: "Java",
