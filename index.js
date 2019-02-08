@@ -52,7 +52,7 @@ const languages = [
   {
     name: "JavaScript (Node.js)",
     alias: "node",
-    executable: "nodejs",
+    executable: "nodejs", // NEW: node
     file: "file.js"
   },
   {
@@ -67,18 +67,18 @@ const languages = [
     executable: "python3",
     file: "file.py"
   },
-  {
-    name: "C#",
-    alias: "csharp",
-    file: "file.cs",
-    customCommand: "gmcs /usercode/file.cs -out:/output/file.exe >/dev/null && mono /output/file.exe"
-  },
-  {
-    name: "Visual Basic .NET",
-    alias: "vb",
-    file: "file.vb",
-    customCommand: "vbnc /quiet /nologo /out:/output/file.exe /usercode/file.vb >/dev/null && mono /output/file.exe"
-  },
+  // {
+  //   name: "C#",
+  //   alias: "csharp",
+  //   file: "file.cs",
+  //   customCommand: "gmcs /usercode/file.cs -out:/output/file.exe >/dev/null && mono /output/file.exe"
+  // },
+  // {
+  //   name: "Visual Basic .NET",
+  //   alias: "vb",
+  //   file: "file.vb",
+  //   customCommand: "vbnc /quiet /nologo /out:/output/file.exe /usercode/file.vb >/dev/null && mono /output/file.exe"
+  // },
   {
     name: "Ruby",
     alias: "ruby",
@@ -86,25 +86,18 @@ const languages = [
     file: "file.rb"
   },
   {
-    name: "PHP 5",
-    alias: "php5",
-    executable: "php5",
-    file: "file.php",
-    sourcePrefix: "<?php "
-  },
-  {
     name: "PHP 7",
     alias: "php7",
-    executable: "php7.0",
+    executable: "php7",
     file: "file.php",
     sourcePrefix: "<?php "
   },
-  {
-    name: "Lua 5.0",
-    alias: "lua50",
-    executable: "lua50",
-    file: "file.lua"
-  },
+  // {
+  //   name: "Lua 5.0",
+  //   alias: "lua50",
+  //   executable: "lua50",
+  //   file: "file.lua"
+  // },
   {
     name: "Lua 5.1",
     alias: "lua51",
@@ -237,7 +230,7 @@ function runSandbox(language, source, onOutput) {
           Hostname: "compilebot",
           Tty: true,
           Interactive: true,
-          User: "mysql",
+          User: "compilebot",
           NetworkDisabled: true,
           HostConfig: {
             Memory: 67108864, // 64 MB
