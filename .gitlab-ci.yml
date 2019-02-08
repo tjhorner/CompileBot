@@ -1,0 +1,17 @@
+stages:
+  - release
+
+deploy:
+  image: tjhorner/alpine-openssh:latest
+  stage: release
+  script:
+    - echo "$PRIV_KEY" >> /key
+    - chmod 400 /key
+    # Deploy on remote machine
+    - |
+      ssh -o StrictHostKeyChecking=no -i /key -p $SSH_PORT $SSH_HOST << EOF
+      cd $SSH_DIRECTORY
+      git pull origin master
+      docker build -t tjhorner/compilebot_sandbox ./docker-image
+      docker-compose up -d --build
+      EOF
