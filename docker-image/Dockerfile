@@ -17,6 +17,10 @@ RUN apk add --no-cache \
 # Properly link javac
 RUN ln -s /usr/lib/jvm/java-1.8-openjdk/bin/javac /usr/bin/javac
 
+# Java runner
+COPY ./runjava.sh /usr/bin/runjava
+RUN chmod +x /usr/bin/runjava
+
 # Setup sandbox stuff
 RUN mkdir -p /output
 RUN adduser -D -H -u 1000 compilebot
