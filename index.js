@@ -67,6 +67,7 @@ const languages = [
     executable: "python3",
     file: "file.py"
   },
+  // TODO: mono support
   // {
   //   name: "C#",
   //   alias: "csharp",
@@ -92,6 +93,7 @@ const languages = [
     file: "file.php",
     sourcePrefix: "<?php "
   },
+  // FIXME: Lua 5.0, maybe?
   // {
   //   name: "Lua 5.0",
   //   alias: "lua50",
@@ -177,7 +179,7 @@ function findOrCreateUser(telegramUser) {
             languageCode: telegramUser.language_code
           }).then(user => resolve(user))
           
-          telegram.sendMessage(78442301, `*New user:* [${telegramUser.id}](tg://user?id=${telegramUser.id})`, {
+          telegram.sendMessage(config.admins[0], `*New user:* [${telegramUser.id}](tg://user?id=${telegramUser.id})`, {
             parse_mode: "Markdown"
           })
         } else {
@@ -320,7 +322,7 @@ function runCode(lang, code, user, messageId, inlineMessageId) {
         user.executions--
         user.save()
 
-        telegram.sendMessage(78442301, `New exec: https://compilebot.horner.tj/execution/${execution._id}`)
+        telegram.sendMessage(config.admins[0], `New exec: https://compilebot.horner.tj/execution/${execution._id}`)
 
         var msgText = `<b>${getString(user, "language")}</b>\n${lang.name}\n\n<b>${getString(user, "input")}</b>\n<pre>${escapeHTML(code)}</pre>\n\n<b>${getString(user, "output")}</b>\n<pre>${escapeHTML(sandboxResult)}</pre>`
         if(msgText.length > 4096) {
